@@ -7,6 +7,29 @@ echo   Albert wird vorbereitet ...
 echo ============================================
 echo.
 
+rem --- Neueste Version von GitHub holen, falls dies ein Git-Repo ist ---
+if exist ".git" (
+    where git >nul 2>nul
+    if errorlevel 1 (
+        echo Git wurde nicht gefunden -- installiere es automatisch ueber winget ...
+        where winget >nul 2>nul
+        if not errorlevel 1 (
+            winget install --id Git.Git -e --silent --accept-source-agreements --accept-package-agreements >nul 2>nul
+            echo Git wurde installiert. Die automatische Aktualisierung ist erst ab
+            echo dem naechsten Start verfuegbar ^(neuer PATH wird erst dann uebernommen^).
+        )
+        echo.
+    ) else (
+        echo Hole neueste Version von GitHub ...
+        git pull --ff-only 2>nul
+        if errorlevel 1 (
+            echo Konnte nicht automatisch aktualisieren ^(z.B. keine Internetverbindung
+            echo oder lokale Aenderungen^) -- verwende den vorhandenen Stand.
+        )
+        echo.
+    )
+)
+
 rem --- Python suchen ---
 set "PYTHON_CMD="
 where python >nul 2>nul
