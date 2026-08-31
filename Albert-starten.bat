@@ -121,12 +121,32 @@ echo Starte Albert ...
 start "Albert Server" ".venv\Scripts\python.exe" server.py
 
 timeout /t 3 /nobreak >nul
-start "" "http://127.0.0.1:8000"
+
+rem --- Browser im Vollbild-/Kiosk-Modus oeffnen (ohne Adressleiste) ---
+rem     Reihenfolge: Chrome zuerst, sonst Edge, sonst normaler Standardbrowser.
+set "CHROME_PATH="
+if exist "%ProgramFiles%\Google\Chrome\Application\chrome.exe" set "CHROME_PATH=%ProgramFiles%\Google\Chrome\Application\chrome.exe"
+if exist "%ProgramFiles(x86)%\Google\Chrome\Application\chrome.exe" set "CHROME_PATH=%ProgramFiles(x86)%\Google\Chrome\Application\chrome.exe"
+if exist "%LocalAppData%\Google\Chrome\Application\chrome.exe" set "CHROME_PATH=%LocalAppData%\Google\Chrome\Application\chrome.exe"
+
+set "EDGE_PATH="
+if exist "%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe" set "EDGE_PATH=%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe"
+if exist "%ProgramFiles%\Microsoft\Edge\Application\msedge.exe" set "EDGE_PATH=%ProgramFiles%\Microsoft\Edge\Application\msedge.exe"
+
+if not "%CHROME_PATH%"=="" (
+    start "" "%CHROME_PATH%" --kiosk "http://127.0.0.1:8000" --no-first-run
+) else if not "%EDGE_PATH%"=="" (
+    start "" "%EDGE_PATH%" --kiosk "http://127.0.0.1:8000" --edge-kiosk-type=fullscreen --no-first-run
+) else (
+    echo Weder Chrome noch Edge gefunden -- oeffne im normalen Browserfenster.
+    start "" "http://127.0.0.1:8000"
+)
 
 echo.
 echo Albert laeuft jetzt im Fenster "Albert Server".
 echo Dieses Fenster kann geschlossen werden -- der Server laeuft weiter,
 echo bis du das Fenster "Albert Server" schliesst.
+echo Vollbild verlassen: Alt+F4 schliesst das Browserfenster.
 echo.
 timeout /t 5 >nul
 exit /b 0
