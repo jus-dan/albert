@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Albert</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main id="app">
+    <section id="persona-select">
+      <h1>Wer soll mit dir sprechen?</h1>
+      <div class="persona-grid">
+        <button class="persona-card" data-persona="albert">
+          <svg viewBox="0 0 80 80" class="persona-avatar" aria-hidden="true">
+            <path d="M6 80 Q6 52 40 52 Q74 52 74 80 Z" fill="#2b2f3d"/>
+            <ellipse cx="40" cy="46" rx="20" ry="16" fill="#eceef2"/>
+            <circle cx="40" cy="34" r="21" fill="#e8bd93"/>
+            <path d="M18 26 Q18 8 40 8 Q62 8 62 26 Q62 14 40 14 Q18 14 18 26 Z" fill="#eceef2"/>
+            <path d="M27 31 q4 -3 8 0" stroke="#cfcfd4" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+            <path d="M45 31 q4 -3 8 0" stroke="#cfcfd4" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+            <circle cx="31" cy="36" r="2.2" fill="#1c1f2b"/>
+            <circle cx="49" cy="36" r="2.2" fill="#1c1f2b"/>
+          </svg>
+          <span class="persona-name">Albert</span>
+          <span class="persona-label">männlich</span>
+        </button>
+        <button class="persona-card" data-persona="albertine">
+          <svg viewBox="0 0 80 80" class="persona-avatar" aria-hidden="true">
+            <path d="M6 80 Q6 52 40 52 Q74 52 74 80 Z" fill="#5b3a52"/>
+            <path d="M14 78 Q10 40 16 26 Q10 44 24 50 L24 78 Z" fill="#7a4632"/>
+            <path d="M66 78 Q70 40 64 26 Q70 44 56 50 L56 78 Z" fill="#7a4632"/>
+            <circle cx="40" cy="34" r="21" fill="#e8bd93"/>
+            <path d="M18 26 Q18 9 40 9 Q62 9 62 26 Q60 15 40 15 Q20 15 18 26 Z" fill="#7a4632"/>
+            <path d="M27 31 q4 -2.5 8 0" stroke="#5c3a28" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+            <path d="M45 31 q4 -2.5 8 0" stroke="#5c3a28" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+            <circle cx="31" cy="36" r="2.2" fill="#1c1f2b"/>
+            <circle cx="49" cy="36" r="2.2" fill="#1c1f2b"/>
+            <path d="M34 45 Q40 49 46 45" stroke="#8a5a3b" stroke-width="2" fill="none" stroke-linecap="round"/>
+          </svg>
+          <span class="persona-name">Albertine</span>
+          <span class="persona-label">weiblich</span>
+        </button>
+        <button class="persona-card" data-persona="alex">
+          <svg viewBox="0 0 80 80" class="persona-avatar" aria-hidden="true">
+            <path d="M6 80 Q6 52 40 52 Q74 52 74 80 Z" fill="#3a4a5b"/>
+            <circle cx="40" cy="34" r="21" fill="#e8bd93"/>
+            <path d="M17 28 Q15 8 40 8 Q65 8 63 28 Q60 12 40 12 Q20 12 17 28 Z" fill="#7d8394"/>
+            <path d="M14 30 Q17 22 22 27" fill="none" stroke="#7d8394" stroke-width="4" stroke-linecap="round"/>
+            <path d="M66 30 Q63 22 58 27" fill="none" stroke="#7d8394" stroke-width="4" stroke-linecap="round"/>
+            <path d="M27 31 q4 -2.5 8 0" stroke="#5b6070" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+            <path d="M45 31 q4 -2.5 8 0" stroke="#5b6070" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+            <circle cx="31" cy="36" r="2.2" fill="#1c1f2b"/>
+            <circle cx="49" cy="36" r="2.2" fill="#1c1f2b"/>
+            <path d="M35 46 Q40 48 45 46" stroke="#8a5a3b" stroke-width="2" fill="none" stroke-linecap="round"/>
+          </svg>
+          <span class="persona-name">Alex</span>
+          <span class="persona-label">non-binär</span>
+        </button>
+      </div>
+      <p class="debug-link">
+        <a href="/board.html">Themen-Board anzeigen</a>
+        &nbsp;·&nbsp;
+        <a href="/debug.html">Debug: Datenbank-Suche testen</a>
+      </p>
+    </section>
+
+    <section id="conversation" hidden>
+      <button id="back-button" type="button">&larr; Person wechseln</button>
+      <h1 id="persona-heading"></h1>
+
+      <div id="status-badge" class="status status-inactive">
+        <span class="dot"></span>
+        <span id="status-text">Inaktiv</span>
+      </div>
+
+      <button id="toggle-button" class="toggle-button toggle-start" type="button">Start</button>
+
+      <p class="hint">Leertaste gedrückt halten zum Sprechen</p>
+      <p id="mic-warning" class="mic-warning" hidden>
+        Kein Mikrofonzugriff — Sprechen ist nicht möglich.
+      </p>
+      <div id="mic-indicator" class="mic-indicator" hidden>&#127908; hört zu ...</div>
+
+      <div id="chat-log" class="chat-log"></div>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

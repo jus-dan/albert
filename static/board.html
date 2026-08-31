@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Albert – Themen-Board</title>
+<link rel="stylesheet" href="style.css" />
+<style>
+  body { align-items: stretch; padding: 1.5rem; }
+  #board-app { max-width: none; width: 100%; }
+  .board-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 1rem; }
+  .board-header h1 { margin: 0; text-align: left; }
+  .back-link { color: var(--muted); text-decoration: none; font-size: 0.9rem; }
+  .back-link:hover { color: var(--text); }
+
+  .board-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    height: calc(100vh - 6rem);
+  }
+
+  .board-zone {
+    display: flex;
+    flex-direction: column;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 1rem;
+    overflow: hidden;
+  }
+
+  .board-zone h2 {
+    margin: 0 0 0.75rem;
+    font-size: 1.1rem;
+    color: var(--text);
+  }
+
+  .board-surface {
+    position: relative;
+    flex: 1;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.02);
+    overflow: auto;
+  }
+
+  .note {
+    position: absolute;
+    width: 190px;
+    min-height: 110px;
+    padding: 0.7rem 0.8rem;
+    border-radius: 6px;
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35);
+    cursor: grab;
+    user-select: none;
+    touch-action: none;
+    transition: opacity 0.6s ease, transform 0.6s ease;
+    font-size: 0.85rem;
+    line-height: 1.35;
+    color: #23230f;
+  }
+
+  .note:active {
+    cursor: grabbing;
+  }
+
+  .note .note-type {
+    display: block;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    opacity: 0.65;
+    margin-bottom: 0.3rem;
+  }
+
+  .note .note-label {
+    font-weight: 600;
+    word-break: break-word;
+  }
+
+  .note .note-time {
+    display: block;
+    margin-top: 0.5rem;
+    font-size: 0.7rem;
+    opacity: 0.6;
+  }
+
+  .note-search {
+    background: #f5e17a;
+  }
+
+  .note-contribution {
+    background: #a8e6a3;
+  }
+
+  .empty-hint {
+    color: var(--muted);
+    font-size: 0.9rem;
+    padding: 1rem;
+  }
+
+  .context-menu {
+    position: fixed;
+    display: none;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 0.3rem;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+    z-index: 10000;
+  }
+
+  .context-menu button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    color: var(--red);
+    padding: 0.4rem 0.9rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    border-radius: 6px;
+    white-space: nowrap;
+  }
+
+  .context-menu button:hover {
+    background: rgba(255, 255, 255, 0.08);
+  }
+</style>
+</head>
+<body>
+  <main id="board-app">
+    <div class="board-header">
+      <div>
+        <a class="back-link" href="/">&larr; Zurück zu Albert</a>
+        <h1>Themen-Board</h1>
+      </div>
+    </div>
+
+    <div class="board-columns">
+      <section class="board-zone">
+        <h2>Was Leute wissen wollten</h2>
+        <div id="surface-search" class="board-surface"></div>
+      </section>
+      <section class="board-zone">
+        <h2>Was neu dazugekommen ist</h2>
+        <div id="surface-contribution" class="board-surface"></div>
+      </section>
+    </div>
+  </main>
+
+  <div id="context-menu" class="context-menu">
+    <button id="delete-note-btn" type="button">🗑 Löschen</button>
+  </div>
+
+  <script>
+    const POLL_MS = 15000;
+    const MAX_NOTES = 30;
+
+    const ENTITY_LABELS = {
+      initiative: "Initiative",
+      organization: "Organisation",
+      person: "Person",
+      challenge: "Challenge",
+      event: "Event",
+    };
+
+    const surfaces = {
+      search: document.getElementById("surface-search"),
+      contribution: document.getElementById("surface-contribution"),
+    };
+
+    // key -> { el, x, y }
+    const known = { search: new Map(), contribution: new Map() };
+
+    function seededRandom(seed) {
+      let h = 0;
+      for (let i = 0; i < seed.length; i++) {
+        h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+      }
+      return () => {
+        h = (h * 1664525 + 1013904223) >>> 0;
+        return h / 4294967296;
+      };
+    }
+
+    function assignPosition(surface, key) {
+      const rand = seededRandom(key);
+      const rect = surface.getBoundingClientRect();
+      const width = Math.max(rect.width, 400);
+      const height = Math.max(rect.height, 400);
+      const x = 8 + rand() * Math.max(1, width - 210);
+      const y = 8 + rand() * Math.max(1, height - 130);
+      const rotation = -6 + rand() * 12;
+      return { x, y, rotation };
+    }
+
+    function formatTime(iso) {
+      try {
+        const d = new Date(iso);
+        return d.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+      } catch (err) {
+        return "";
+      }
+    }
+
+    function renderZone(kind, entries) {
+      const surface = surfaces[kind];
+      const seen = new Set();
+
+      entries.forEach((entry, rank) => {
+        const key = entry.id || entry.timestamp;
+        seen.add(key);
+        const scale = Math.max(0.6, 1 - rank * 0.045);
+        const opacity = Math.max(0.4, 1 - rank * 0.05);
+        const zIndex = 1000 - rank;
+
+        let record = known[kind].get(key);
+        if (!record) {
+          const pos = assignPosition(surface, key);
+          const el = document.createElement("div");
+          el.className = `note note-${kind}`;
+          el.dataset.id = entry.id || "";
+          el.innerHTML = `
+            <span class="note-type"></span>
+            <span class="note-label"></span>
+            <span class="note-time"></span>
+          `;
+          el.querySelector(".note-type").textContent = ENTITY_LABELS[entry.entity_type] || entry.entity_type || "";
+          el.querySelector(".note-label").textContent = entry.label || "";
+          el.querySelector(".note-time").textContent = formatTime(entry.timestamp);
+          el.style.left = pos.x + "px";
+          el.style.top = pos.y + "px";
+          surface.appendChild(el);
+          makeDraggable(el);
+          el.addEventListener("contextmenu", (event) => {
+            event.preventDefault();
+            openContextMenu(event, { id: entry.id, el, kind, key });
+          });
+          record = { el, rotation: pos.rotation };
+          known[kind].set(key, record);
+        }
+
+        record.el.style.zIndex = zIndex;
+        record.el.style.opacity = String(opacity);
+        record.el.style.transform = `scale(${scale}) rotate(${record.rotation}deg)`;
+      });
+
+      // Alte Notizen entfernen, die nicht mehr in den letzten MAX_NOTES sind
+      for (const [key, record] of known[kind].entries()) {
+        if (!seen.has(key)) {
+          record.el.remove();
+          known[kind].delete(key);
+        }
+      }
+
+      if (entries.length === 0 && surface.children.length === 0) {
+        surface.innerHTML = '<p class="empty-hint">Noch keine Ereignisse.</p>';
+      } else {
+        const hint = surface.querySelector(".empty-hint");
+        if (hint) hint.remove();
+      }
+    }
+
+    function makeDraggable(el) {
+      let dragging = false;
+      let offsetX = 0;
+      let offsetY = 0;
+
+      el.addEventListener("pointerdown", (event) => {
+        if (event.button === 2) return;
+        dragging = true;
+        el.setPointerCapture(event.pointerId);
+        const rect = el.getBoundingClientRect();
+        offsetX = event.clientX - rect.left;
+        offsetY = event.clientY - rect.top;
+        el.style.zIndex = 9999;
+      });
+
+      el.addEventListener("pointermove", (event) => {
+        if (!dragging) return;
+        const parentRect = el.parentElement.getBoundingClientRect();
+        const x = event.clientX - parentRect.left - offsetX;
+        const y = event.clientY - parentRect.top - offsetY;
+        el.style.left = x + "px";
+        el.style.top = y + "px";
+      });
+
+      const stop = () => { dragging = false; };
+      el.addEventListener("pointerup", stop);
+      el.addEventListener("pointercancel", stop);
+    }
+
+    const contextMenu = document.getElementById("context-menu");
+    const deleteNoteBtn = document.getElementById("delete-note-btn");
+    let contextTarget = null;
+
+    function openContextMenu(event, target) {
+      contextTarget = target;
+      contextMenu.style.left = event.clientX + "px";
+      contextMenu.style.top = event.clientY + "px";
+      contextMenu.style.display = "block";
+    }
+
+    function closeContextMenu() {
+      contextMenu.style.display = "none";
+      contextTarget = null;
+    }
+
+    document.addEventListener("click", closeContextMenu);
+    document.addEventListener("scroll", closeContextMenu, true);
+
+    deleteNoteBtn.addEventListener("click", async (event) => {
+      event.stopPropagation();
+      const target = contextTarget;
+      closeContextMenu();
+      if (!target) return;
+
+      if (!target.id) {
+        alert("Dieser Eintrag stammt aus einer älteren Version und kann nicht einzeln gelöscht werden.");
+        return;
+      }
+      if (!confirm("Diesen Eintrag wirklich vom Board löschen?")) return;
+
+      try {
+        const resp = await fetch(`/api/board/${target.id}`, { method: "DELETE" });
+        if (resp.ok) {
+          target.el.remove();
+          known[target.kind].delete(target.key);
+        } else {
+          alert("Löschen fehlgeschlagen.");
+        }
+      } catch (err) {
+        alert("Löschen fehlgeschlagen (Netzwerkfehler).");
+      }
+    });
+
+    async function poll() {
+      try {
+        const resp = await fetch("/api/board");
+        const data = await resp.json();
+        renderZone("search", (data.searches || []).slice(0, MAX_NOTES));
+        renderZone("contribution", (data.contributions || []).slice(0, MAX_NOTES));
+      } catch (err) {
+        /* naechster Poll versucht es erneut */
+      }
+    }
+
+    poll();
+    setInterval(poll, POLL_MS);
+  </script>
+</body>
+</html>
