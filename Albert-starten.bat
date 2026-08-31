@@ -18,12 +18,35 @@ if "%PYTHON_CMD%"=="" (
 )
 
 if "%PYTHON_CMD%"=="" (
-    echo Python wurde auf diesem Rechner nicht gefunden.
-    echo Bitte installiere Python 3.11 oder neuer von https://www.python.org/downloads/
-    echo ^(beim Installieren "Add python.exe to PATH" ankreuzen^) und starte diese Datei danach erneut.
+    echo Python wurde nicht gefunden -- versuche automatische Installation ueber winget ...
+    echo.
+    where winget >nul 2>nul
+    if errorlevel 1 (
+        echo winget ist auf diesem Rechner nicht verfuegbar.
+        echo Bitte installiere Python 3.11 oder neuer manuell von https://www.python.org/downloads/
+        echo ^(beim Installieren "Add python.exe to PATH" ankreuzen^) und starte diese Datei danach erneut.
+        echo.
+        pause
+        exit /b 1
+    )
+
+    winget install --id Python.Python.3.13 -e --silent --accept-source-agreements --accept-package-agreements
+    if errorlevel 1 (
+        echo.
+        echo Automatische Installation ist fehlgeschlagen.
+        echo Bitte installiere Python 3.11 oder neuer manuell von https://www.python.org/downloads/
+        echo ^(beim Installieren "Add python.exe to PATH" ankreuzen^) und starte diese Datei danach erneut.
+        echo.
+        pause
+        exit /b 1
+    )
+
+    echo.
+    echo Python wurde installiert. Bitte starte diese Datei jetzt noch einmal,
+    echo damit Windows den neuen PATH-Eintrag uebernimmt.
     echo.
     pause
-    exit /b 1
+    exit /b 0
 )
 
 rem --- Virtuelle Umgebung anlegen, falls noch nicht vorhanden ---
