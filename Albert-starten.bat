@@ -1,0 +1,86 @@
+@echo off
+setlocal enabledelayedexpansion
+cd /d "%~dp0"
+
+echo ============================================
+echo   Albert wird vorbereitet ...
+echo ============================================
+echo.
+
+rem --- Python suchen ---
+set "PYTHON_CMD="
+where python >nul 2>nul
+if not errorlevel 1 set "PYTHON_CMD=python"
+
+if "%PYTHON_CMD%"=="" (
+    where py >nul 2>nul
+    if not errorlevel 1 set "PYTHON_CMD=py -3"
+)
+
+if "%PYTHON_CMD%"=="" (
+    echo Python wurde auf diesem Rechner nicht gefunden.
+    echo Bitte installiere Python 3.11 oder neuer von https://www.python.org/downloads/
+    echo ^(beim Installieren "Add python.exe to PATH" ankreuzen^) und starte diese Datei danach erneut.
+    echo.
+    pause
+    exit /b 1
+)
+
+rem --- Virtuelle Umgebung anlegen, falls noch nicht vorhanden ---
+if not exist ".venv\Scripts\python.exe" (
+    echo Erstelle virtuelle Umgebung ...
+    %PYTHON_CMD% -m venv .venv
+    if errorlevel 1 (
+        echo Konnte keine virtuelle Umgebung erstellen.
+        pause
+        exit /b 1
+    )
+)
+
+rem --- Abhaengigkeiten installieren/aktualisieren ---
+echo Installiere/aktualisiere benoetigte Pakete ...
+".venv\Scripts\python.exe" -m pip install --quiet --upgrade pip
+".venv\Scripts\python.exe" -m pip install --quiet -r requirements.txt
+if errorlevel 1 (
+    echo.
+    echo Fehler beim Installieren der Pakete. Bitte Internetverbindung pruefen.
+    pause
+    exit /b 1
+)
+
+rem --- .env pruefen ---
+if not exist ".env" (
+    echo.
+    echo Keine .env-Datei gefunden -- lege sie aus der Vorlage an ...
+    copy ".env.example" ".env" >nul
+    echo.
+    echo ============================================
+    echo   WICHTIG: Bitte trage deine Zugangsdaten ein
+    echo ============================================
+    echo In der sich gleich oeffnenden Datei .env musst du eintragen:
+    echo   - OPENAI_API_KEY
+    echo   - AIRTABLE_API_TOKEN
+    echo   - AIRTABLE_BASE_ID
+    echo.
+    echo Datei speichern, dann diese Datei hier noch einmal starten.
+    echo.
+    notepad ".env"
+    pause
+    exit /b 0
+)
+
+rem --- Server starten ---
+echo.
+echo Starte Albert ...
+start "Albert Server" ".venv\Scripts\python.exe" server.py
+
+timeout /t 3 /nobreak >nul
+start "" "http://127.0.0.1:8000"
+
+echo.
+echo Albert laeuft jetzt im Fenster "Albert Server".
+echo Dieses Fenster kann geschlossen werden -- der Server laeuft weiter,
+echo bis du das Fenster "Albert Server" schliesst.
+echo.
+timeout /t 5 >nul
+exit /b 0
