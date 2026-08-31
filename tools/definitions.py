@@ -7,18 +7,15 @@ TOOLS = [
         "type": "function",
         "name": "list_entities",
         "description": (
-            "Sucht vorhandene Eintraege im Oekosystem (Initiativen, Organisationen "
-            "oder Personen) und gibt Name und Beschreibung zurueck. Nutze dies, wenn "
-            "der Nutzer wissen will, was es bereits gibt."
+            "Sucht vorhandene Eintraege im Oekosystem und gibt Name, Typ und "
+            "Beschreibung zurueck. Durchsucht IMMER alle Kategorien gleichzeitig "
+            "(Initiativen, Organisationen UND Personen) -- du musst den Typ nicht "
+            "vorher erraten. Nutze dies, wenn der Nutzer wissen will, was es "
+            "bereits gibt."
         ),
         "parameters": {
             "type": "object",
             "properties": {
-                "entity_type": {
-                    "type": "string",
-                    "enum": ["initiative", "organization", "person"],
-                    "description": "Welche Art von Eintrag gesucht wird.",
-                },
                 "query": {
                     "type": "string",
                     "description": (
@@ -27,7 +24,7 @@ TOOLS = [
                     ),
                 },
             },
-            "required": ["entity_type"],
+            "required": [],
         },
     },
     {
@@ -97,10 +94,9 @@ TOOLS = [
 
 async def dispatch(name: str, arguments: dict) -> str:
     if name == "list_entities":
-        entity_type = arguments.get("entity_type", "")
         query = arguments.get("query", "")
-        results = await airtable_client.list_entities(entity_type=entity_type, query=query)
-        events.log_event("search", entity_type, query or "(alle)")
+        results = await airtable_client.search_all_entities(query=query)
+        events.log_event("search", "all", query or "(alle)")
         if not results:
             return json.dumps({"count": 0, "results": []})
         return json.dumps({"count": len(results), "results": results})

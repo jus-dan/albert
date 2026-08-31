@@ -1,3 +1,4 @@
+import asyncio
 import os
 
 import httpx
@@ -64,8 +65,23 @@ async def list_entities(entity_type: str, query: str = "") -> list[dict]:
         fields = record.get("fields", {})
         entry = {f: fields[f] for f in wanted_fields if fields.get(f)}
         if entry.get("name"):
+            entry["entity_type"] = entity_type
             results.append(entry)
     return results
+
+
+async def search_all_entities(query: str = "") -> list[dict]:
+    """Durchsucht alle Entitaets-Tabellen (Initiativen, Organisationen,
+    Personen) gleichzeitig, damit eine Suche nicht an einem falsch geratenen
+    Typ vorbeigeht."""
+    entity_types = list(TABLE_BY_ENTITY.keys())
+    results_per_type = await asyncio.gather(
+        *(list_entities(entity_type, query) for entity_type in entity_types)
+    )
+    combined: list[dict] = []
+    for results in results_per_type:
+        combined.extend(results)
+    return combined
 
 
 async def search_debug(entity_type: str, query: str = "") -> dict:

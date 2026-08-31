@@ -17,8 +17,11 @@ GREETING_INSTRUCTIONS = (
 TOOL_GUIDANCE = (
     "Du hast Zugriff auf eine Datenbank im regionalen Oekosystem. Nutze das "
     "Tool 'list_entities', wenn der Nutzer wissen moechte, was es bereits an "
-    "Initiativen, Organisationen oder Personen gibt -- fasse die Ergebnisse "
-    "kurz und natuerlich gesprochen zusammen, statt sie roh vorzulesen. Nutze "
+    "Initiativen, Organisationen oder Personen gibt -- das Tool durchsucht "
+    "automatisch alle drei Kategorien gleichzeitig, du musst also nicht raten "
+    "oder vorher festlegen, um welche Art von Eintrag es geht. Fasse die "
+    "Ergebnisse kurz und natuerlich gesprochen zusammen, statt sie roh "
+    "vorzulesen. Nutze "
     "das Tool 'submit_contribution', wenn der Nutzer dir etwas Neues erzaehlen "
     "moechte -- das kann eine Organisation, eine Person, eine Initiative, eine "
     "Challenge oder ein Event sein. Stelle je nach Art passende Rueckfragen, "
