@@ -154,6 +154,14 @@
     <button id="delete-note-btn" type="button">🗑 Löschen</button>
   </div>
 
+  <footer id="version-footer" class="version-footer"></footer>
+  <script>
+    fetch("/api/version")
+      .then((r) => r.json())
+      .then((d) => { document.getElementById("version-footer").textContent = d.version; })
+      .catch(() => {});
+  </script>
+
   <script>
     const POLL_MS = 15000;
     const MAX_NOTES = 30;

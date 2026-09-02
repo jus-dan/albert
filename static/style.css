@@ -59,6 +59,17 @@ h1 {
   color: var(--text);
 }
 
+.version-footer {
+  position: fixed;
+  bottom: 0.5rem;
+  right: 0.75rem;
+  font-size: 0.75rem;
+  color: var(--muted);
+  opacity: 0.55;
+  font-family: monospace;
+  pointer-events: none;
+}
+
 .persona-card {
   background: var(--card-bg);
   border: 1px solid var(--card-border);

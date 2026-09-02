@@ -85,6 +85,13 @@
       <div id="chat-log" class="chat-log"></div>
     </section>
   </main>
+  <footer id="version-footer" class="version-footer"></footer>
   <script src="app.js"></script>
+  <script>
+    fetch("/api/version")
+      .then((r) => r.json())
+      .then((d) => { document.getElementById("version-footer").textContent = d.version; })
+      .catch(() => {});
+  </script>
 </body>
 </html>
