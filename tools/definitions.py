@@ -82,6 +82,10 @@ async def dispatch(name: str, arguments: dict) -> str:
         title = swiss_de(arguments.get("title", ""))
         original_wish = swiss_de(arguments.get("original_wish", ""))
         local_idea = swiss_de(arguments.get("local_idea", ""))
+        if not title.strip() or not original_wish.strip():
+            return json.dumps(
+                {"error": "title und original_wish duerfen nicht leer sein -- bitte nochmal aufrufen."}
+            )
         about = f"Urspruenglicher Wunsch: {original_wish}"
         if local_idea:
             about += f"\n\nKonkrete lokale Idee: {local_idea}"
@@ -103,6 +107,10 @@ async def dispatch(name: str, arguments: dict) -> str:
     if name == "submit_challenge":
         title = swiss_de(arguments.get("title", ""))
         description = swiss_de(arguments.get("description", ""))
+        if not title.strip() or not description.strip():
+            return json.dumps(
+                {"error": "title und description duerfen nicht leer sein -- bitte nochmal aufrufen."}
+            )
         result = await airtable_client.submit_contribution(
             entity_type="challenge",
             name=title,

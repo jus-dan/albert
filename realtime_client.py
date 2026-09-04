@@ -45,8 +45,10 @@ class RealtimeClient:
         self._ws = None
         self._recv_task = None
         self._response_active = False
+        self._response_started_at: float | None = None
         self._speech_started_at: float | None = None
         self._language_locked = False
+        self._session: dict | None = None
 
     async def connect(
         self,
@@ -101,6 +103,7 @@ class RealtimeClient:
             session["tools"] = tools
             session["tool_choice"] = "auto"
 
+        self._session = session
         await self._send({"type": "session.update", "session": session})
         self._recv_task = asyncio.create_task(self._receive_loop())
 
@@ -144,12 +147,15 @@ class RealtimeClient:
             return
         self._language_locked = True
         logger.info("Sprache erkannt und fixiert: %s", lang)
-        await self._send(
-            {
-                "type": "session.update",
-                "session": {"audio": {"input": {"transcription": {"language": lang}}}},
-            }
-        )
+        if self._session is not None:
+            # Die komplette, zuletzt gesendete Session-Konfiguration erneut
+            # verschicken (nur mit geaenderter Sprache) statt eines
+            # Teil-Updates -- unklar, ob die API verschachtelte Objekte bei
+            # einem Teil-Update mergt oder ersetzt, und ein versehentliches
+            # Zuruecksetzen von turn_detection/tools waere schwer zu
+            # bemerken, aber fatal fuers Erfassen.
+            self._session["audio"]["input"]["transcription"]["language"] = lang
+            await self._send({"type": "session.update", "session": self._session})
 
     async def _confirm_barge_in(self, started_at: float):
         # Deutlich laenger abwarten, bevor die laufende Antwort wirklich
@@ -162,7 +168,17 @@ class RealtimeClient:
             return
         if self._on_speech_started:
             self._on_speech_started()
-        if self._response_active:
+        # NUR abbrechen, wenn die aktive Antwort schon lief, BEVOR diese
+        # Sprachphase begann -- sonst wuerde eine verzoegerte Bestaetigung
+        # eine voellig neue, inzwischen gestartete Antwort abwuergen (z.B.
+        # gerade den Tool-Aufruf zum Erfassen des Wunsches), obwohl das
+        # Geraeusch laengst vorbei ist. Das fuehrte zu leeren
+        # submit_wish/submit_challenge-Aufrufen.
+        if (
+            self._response_active
+            and self._response_started_at is not None
+            and self._response_started_at < started_at
+        ):
             await self.cancel_response()
 
     async def _handle_tool_call(self, event: dict):
@@ -207,6 +223,7 @@ class RealtimeClient:
                     self._on_transcript_delta(event.get("delta", ""))
                 elif event_type == "response.created":
                     self._response_active = True
+                    self._response_started_at = time.monotonic()
                     if self._on_response_start:
                         self._on_response_start()
                 elif event_type == "response.done":
