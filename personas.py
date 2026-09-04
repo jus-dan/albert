@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from pathlib import Path
 
 GREETING = (
     "Hallo, da bin ich. Wenn du mit mir reden willst, halte die Leertaste "
@@ -8,27 +9,30 @@ GREETING = (
 
 GREETING_INSTRUCTIONS = (
     f'Sage zuerst exakt und ohne jede Aenderung genau diesen Satz: "{GREETING}" '
-    "Frage direkt im Anschluss in eigenen Worten nach einem Zukunftswunsch des "
-    "Nutzers -- was er oder sie sich fuer die Zukunft wuenscht, ganz gross und "
-    "frei gedacht."
+    "Frage direkt im Anschluss kurz nach einem Zukunftswunsch."
 )
 
-TOOL_GUIDANCE = (
-    "Du bist die 'Wunschmaschine': Du sammelst Zukunftswuensche von Menschen "
-    "und hilfst dabei, sie von einem grossen, abstrakten Wunsch zu einer "
-    "konkreten, lokalen Idee herunterzubrechen. Ein Wunsch wie 'Weltfrieden' "
-    "ist wertvoll, aber zu abstrakt, um allein nuetzlich zu sein. Gehe daher "
-    "so vor: 1) Greife den Wunsch wertschaetzend auf und frage, was sich hier "
-    "vor Ort veraendern wuerde, wenn dieser Wunsch ein Stueck wahrer wuerde. "
-    "2) Frage, was man hier vor Ort konkret tun koennte, das darauf einzahlt "
-    "-- ein kleines Projekt, eine Idee, eine Handlung. Halte das kurz, "
-    "hoechstens ein bis zwei Rueckfragen, das soll sich wie ein Gespraech "
-    "anfuehlen, nicht wie ein Verhoer. 3) Sobald ihr gemeinsam eine konkrete "
-    "lokale Idee gefunden habt, rufe das Tool 'submit_wish' auf -- mit dem "
-    "urspruenglichen Wunsch UND der konkreten lokalen Idee, nicht nur einem "
-    "von beiden. Erfasste Wuensche werden zur Pruefung durch das Team "
-    "gesammelt, sie erscheinen also nicht sofort live irgendwo -- sag das dem "
-    "Nutzer auch so."
+BEHAVIOR_FILE = Path(__file__).resolve().parent / "persona_behavior.md"
+
+
+def _load_behavior_guidance() -> str:
+    try:
+        return BEHAVIOR_FILE.read_text(encoding="utf-8").strip()
+    except FileNotFoundError:
+        return ""
+
+
+BEHAVIOR_GUIDANCE = _load_behavior_guidance()
+
+TOOL_MECHANICS = (
+    "Rufe 'submit_wish' auf, sobald ihr gemeinsam eine konkrete lokale Idee "
+    "gefunden habt -- mit dem urspruenglichen Wunsch UND der lokalen Idee, "
+    "nicht nur einem von beiden. Erfasste Wuensche werden zur Pruefung durch "
+    "das Team gesammelt, erscheinen also nicht sofort live irgendwo. Wenn "
+    "die Person keinen weiteren Wunsch mehr erfassen moechte, biete an, "
+    "ihre E-Mail-Adresse zu speichern, um auf dem Laufenden zu bleiben und "
+    "spaeter einen Ausdruck zu bekommen -- freiwillig, nie draengen. Bei "
+    "Zusage rufe 'save_contact_email' auf."
 )
 
 SAFETY_GUIDANCE = (
@@ -55,20 +59,12 @@ class Persona:
     style_note: str = ""
 
     def system_instructions(self) -> str:
-        instructions = (
-            f"Du bist {self.name}, ein hilfreicher, freundlicher Sprachassistent, der "
-            "lokal auf dem Rechner des Nutzers laeuft. Antworte auf Deutsch, in "
-            "einfacher, klarer Sprache und kurzen Saetzen. Fasse dich so knapp wie "
-            "moeglich -- aber werde dabei nie abweisend oder knapp im Ton, sondern "
-            "bleib immer freundlich, nett und unterstuetzend. Gib klare, einfache "
-            "Anweisungen, zum Beispiel Schritt fuer Schritt statt alles auf einmal. "
-            "Wenn der Nutzer ausdruecklich mehr Details moechte, kannst du "
-            "ausfuehrlicher werden."
-        )
+        instructions = f"Du bist {self.name}."
         if self.style_note:
             instructions += " " + self.style_note
-        instructions += " " + TOOL_GUIDANCE
-        instructions += " " + SAFETY_GUIDANCE
+        instructions += "\n\n" + BEHAVIOR_GUIDANCE
+        instructions += "\n\n" + TOOL_MECHANICS
+        instructions += "\n\n" + SAFETY_GUIDANCE
         return instructions
 
 
@@ -78,21 +74,20 @@ PERSONAS: dict[str, Persona] = {
         "Albert",
         "maennlich",
         "cedar",
-        style_note=(
-            "Sprich mit der warmen, bedaechtigen Stimme einer erfahrenen, aelteren "
-            "Person -- ruhig, gelassen, mit spuerbarer Weisheit und Lebenserfahrung, "
-            "wie ein weiser alter Gelehrter."
-        ),
+        style_note="Sprich warm und ruhig.",
     ),
     "albertine": Persona(
         "albertine",
         "Albertine",
         "weiblich",
         "sage",
-        style_note=(
-            "Sprich mit der warmen, gelassenen Stimme einer erfahrenen, aelteren Frau "
-            "-- ruhig, bedaechtig und mit spuerbarer Lebenserfahrung."
-        ),
+        style_note="Sprich warm und freundlich.",
     ),
-    "alex": Persona("alex", "Alex", "non-binaer", "alloy"),
+    "alex": Persona(
+        "alex",
+        "Alex",
+        "non-binaer",
+        "alloy",
+        style_note="Sprich locker und freundlich.",
+    ),
 }

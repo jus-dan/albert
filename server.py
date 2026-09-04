@@ -87,8 +87,26 @@ async def albert_socket(websocket: WebSocket, persona_id: str):
     def send_user_transcript(transcript: str):
         asyncio.create_task(websocket.send_text(json.dumps({"type": "user_message", "text": transcript})))
 
+    last_wish_record_id = None
+
     async def handle_tool_call(name: str, arguments: dict) -> str:
+        nonlocal last_wish_record_id
         logger.info("Tool-Aufruf: %s(%s)", name, arguments)
+
+        if name == "save_contact_email":
+            if not last_wish_record_id:
+                return json.dumps({"error": "Noch kein Wunsch erfasst."})
+            try:
+                await airtable_client.update_record(
+                    "_input_pipeline",
+                    last_wish_record_id,
+                    {"contact_email": arguments.get("email", "")},
+                )
+                return json.dumps({"status": "ok"})
+            except Exception:
+                logger.exception("Konnte E-Mail nicht speichern")
+                return json.dumps({"error": "Konnte E-Mail nicht speichern."})
+
         result = await dispatch_tool(name, arguments)
 
         if name in ("submit_contribution", "submit_wish"):
@@ -97,6 +115,8 @@ async def albert_socket(websocket: WebSocket, persona_id: str):
             except json.JSONDecodeError:
                 parsed = {}
             if parsed.get("status") == "ok":
+                if name == "submit_wish":
+                    last_wish_record_id = parsed.get("record_id")
                 display_name = arguments.get("name") or arguments.get("title", "")
                 entity_type = arguments.get("entity_type") or ("challenge" if name == "submit_wish" else "")
                 await websocket.send_text(

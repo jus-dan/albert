@@ -153,3 +153,13 @@ async def submit_contribution(
         data = resp.json()
 
     return {"table": "_input_pipeline", "record_id": data.get("id")}
+
+
+async def update_record(table: str, record_id: str, fields: dict) -> None:
+    async with httpx.AsyncClient(timeout=15) as client:
+        resp = await client.patch(
+            f"{BASE_URL}/{table}/{record_id}",
+            headers=_headers(),
+            json={"fields": fields},
+        )
+        resp.raise_for_status()

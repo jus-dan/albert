@@ -39,6 +39,26 @@ TOOLS = [
             "required": ["title", "original_wish", "local_idea"],
         },
     },
+    {
+        "type": "function",
+        "name": "save_contact_email",
+        "description": (
+            "Speichert die E-Mail-Adresse der Person beim zuletzt erfassten "
+            "Wunsch, damit sie auf dem Laufenden bleibt und spaeter einen "
+            "Ausdruck bekommt. Nur aufrufen, wenn die Person das moechte und "
+            "vorher mindestens ein Wunsch erfasst wurde."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "description": "Die E-Mail-Adresse der Person.",
+                },
+            },
+            "required": ["email"],
+        },
+    },
 ]
 
 
