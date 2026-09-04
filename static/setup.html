@@ -21,6 +21,16 @@
   .option { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0; font-size: 0.95rem; }
   .option input { width: 1.1rem; height: 1.1rem; }
   .hint { color: var(--muted); font-size: 0.85rem; margin: 0.3rem 0 0; }
+  select {
+    width: 100%;
+    padding: 0.5rem 0.6rem;
+    border-radius: 8px;
+    border: 1px solid var(--card-border);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+  }
   #save-button {
     border: none;
     border-radius: 999px;
@@ -72,6 +82,21 @@
     </fieldset>
 
     <fieldset>
+      <legend>Drucken</legend>
+      <label class="option">
+        <input type="checkbox" id="printing-checkbox" />
+        Ausdrucken aktivieren
+      </label>
+      <select id="printer-select">
+        <option value="">Kein Drucker ausgewählt</option>
+      </select>
+      <p class="hint" id="printer-hint">
+        Ohne ausgewählten Drucker bleibt Ausdrucken deaktiviert, auch wenn
+        oben angehakt.
+      </p>
+    </fieldset>
+
+    <fieldset>
       <legend>Diagnose</legend>
       <label class="option">
         <input type="checkbox" id="debug-checkbox" />
@@ -87,8 +112,32 @@
     const PERSONA_BOXES = document.querySelectorAll('input[name="persona"]');
     const MODE_RADIOS = document.querySelectorAll('input[name="mode"]');
     const debugCheckbox = document.getElementById("debug-checkbox");
+    const printingCheckbox = document.getElementById("printing-checkbox");
+    const printerSelect = document.getElementById("printer-select");
+    const printerHint = document.getElementById("printer-hint");
     const saveButton = document.getElementById("save-button");
     const feedback = document.getElementById("feedback");
+
+    async function loadPrinters(selected) {
+      try {
+        const resp = await fetch("/api/printers");
+        const data = await resp.json();
+        const printers = data.printers || [];
+        printerSelect.innerHTML = '<option value="">Kein Drucker ausgewählt</option>';
+        printers.forEach((name) => {
+          const opt = document.createElement("option");
+          opt.value = name;
+          opt.textContent = name;
+          printerSelect.appendChild(opt);
+        });
+        if (printers.length === 0) {
+          printerHint.textContent = "Keine Drucker auf diesem Gerät gefunden.";
+        }
+        printerSelect.value = selected && printers.includes(selected) ? selected : "";
+      } catch (err) {
+        printerHint.textContent = "Drucker-Liste konnte nicht geladen werden.";
+      }
+    }
 
     async function load() {
       try {
@@ -102,6 +151,8 @@
           radio.checked = radio.value === (data.interaction_mode || "vad");
         });
         debugCheckbox.checked = !!data.show_debug_info;
+        printingCheckbox.checked = !!data.printing_enabled;
+        await loadPrinters(data.selected_printer || "");
       } catch (err) {
         feedback.hidden = false;
         feedback.textContent = "Einstellungen konnten nicht geladen werden.";
@@ -122,12 +173,20 @@
       }
 
       const show_debug_info = debugCheckbox.checked;
+      const printing_enabled = printingCheckbox.checked;
+      const selected_printer = printerSelect.value;
 
       try {
         const resp = await fetch("/api/settings", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ enabled_personas, interaction_mode, show_debug_info }),
+          body: JSON.stringify({
+            enabled_personas,
+            interaction_mode,
+            show_debug_info,
+            printing_enabled,
+            selected_printer,
+          }),
         });
         feedback.hidden = false;
         if (resp.ok) {

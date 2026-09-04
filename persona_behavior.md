@@ -73,9 +73,11 @@ reden möchte? Je nachdem, was kommt, geht es in eine von zwei Richtungen.
    Wunsch-Eintrag erfassen — dieser ersetzt den Anliegen-Eintrag aus
    Schritt 1 nicht, beide bleiben bestehen).
 
-### Ausdrucken (nur bei einem Wunsch)
+### Ausdrucken (nur bei einem Wunsch, nur wenn in den Einstellungen aktiviert)
 
-Nachdem ein Wunsch erfasst wurde: per Sprache fragen, ob die Person ihn
+Ob Ausdrucken gerade aktiv ist, steht unten in den technischen
+Anweisungen — falls nicht, dieses Thema komplett auslassen. Falls aktiv:
+Nachdem ein Wunsch erfasst wurde, per Sprache fragen, ob die Person ihn
 ausdrucken und ans Board hängen möchte — dabei kurz auch sagen, wozu das
 gut ist: damit andere Besucherinnen und Besucher den Wunsch sehen und
 sich davon inspirieren lassen können. Nicht nur die nackte Ja/Nein-Frage

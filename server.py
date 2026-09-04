@@ -12,7 +12,8 @@ from personas import PERSONAS, greeting_instructions
 from realtime_client import RealtimeClient
 from tools import airtable_client, events
 from tools.definitions import TOOLS, dispatch as dispatch_tool
-from tools.settings import load_settings, save_settings
+from tools.printing import list_printers, print_pdf_bytes
+from tools.settings import load_settings, printing_active, save_settings
 from tools.text_utils import swiss_de
 from tools.wunschzettel_pdf import build_wunschzettel_pdf
 
@@ -73,13 +74,23 @@ async def api_set_settings(payload: dict):
     if mode not in ("vad", "push_to_talk"):
         raise HTTPException(status_code=400, detail="Ungueltiger Modus.")
     show_debug_info = bool(payload.get("show_debug_info", False))
+    selected_printer = payload.get("selected_printer") or ""
+    if selected_printer and selected_printer not in list_printers():
+        raise HTTPException(status_code=400, detail="Unbekannter Drucker.")
     settings = {
         "enabled_personas": enabled,
         "interaction_mode": mode,
         "show_debug_info": show_debug_info,
+        "printing_enabled": bool(payload.get("printing_enabled", False)),
+        "selected_printer": selected_printer,
     }
     save_settings(settings)
     return settings
+
+
+@app.get("/api/printers")
+async def api_printers():
+    return {"printers": list_printers()}
 
 
 @app.get("/api/board")
@@ -112,24 +123,42 @@ async def api_wish(record_id: str):
     }
 
 
-@app.get("/api/wish/{record_id}/pdf")
-async def api_wish_pdf(record_id: str):
+async def _build_pdf_for_record(record_id: str) -> bytes:
     try:
         record = await airtable_client.get_record("_input_pipeline", record_id)
     except Exception:
         raise HTTPException(status_code=404, detail="Wunsch nicht gefunden.")
     fields = record.get("fields", {})
-    pdf_bytes = build_wunschzettel_pdf(
+    return build_wunschzettel_pdf(
         name=fields.get("name", ""),
         about=fields.get("about", ""),
         created_time=record.get("createdTime", ""),
         record_id=record.get("id", record_id),
     )
+
+
+@app.get("/api/wish/{record_id}/pdf")
+async def api_wish_pdf(record_id: str):
+    pdf_bytes = await _build_pdf_for_record(record_id)
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
         headers={"Content-Disposition": f'inline; filename="wunschzettel-{record_id}.pdf"'},
     )
+
+
+@app.post("/api/wish/{record_id}/print")
+async def api_wish_print(record_id: str):
+    settings = load_settings()
+    if not printing_active(settings):
+        raise HTTPException(status_code=400, detail="Drucken ist nicht aktiviert.")
+    pdf_bytes = await _build_pdf_for_record(record_id)
+    try:
+        print_pdf_bytes(pdf_bytes, settings["selected_printer"])
+    except Exception:
+        logger.exception("Drucken fehlgeschlagen (%s)", record_id)
+        raise HTTPException(status_code=500, detail="Drucken fehlgeschlagen.")
+    return {"status": "ok"}
 
 
 @app.websocket("/ws/{persona_id}")
@@ -141,6 +170,10 @@ async def albert_socket(websocket: WebSocket, persona_id: str):
         await websocket.send_text(json.dumps({"type": "error", "message": "Unbekannte Person."}))
         await websocket.close()
         return
+
+    settings = load_settings()
+    push_to_talk = settings.get("interaction_mode") == "push_to_talk"
+    printing_on = printing_active(settings)
 
     async def send_audio(pcm_bytes: bytes):
         await websocket.send_text(
@@ -192,7 +225,7 @@ async def albert_socket(websocket: WebSocket, persona_id: str):
                         }
                     )
                 )
-                if name == "submit_wish":
+                if name == "submit_wish" and printing_on:
                     await websocket.send_text(
                         json.dumps({"type": "print_link", "record_id": parsed.get("record_id")})
                     )
@@ -208,13 +241,10 @@ async def albert_socket(websocket: WebSocket, persona_id: str):
         on_speech_started=send_speech_started,
     )
 
-    settings = load_settings()
-    push_to_talk = settings.get("interaction_mode") == "push_to_talk"
-
     try:
         await client.connect(
             voice=persona.voice,
-            instructions=persona.system_instructions(),
+            instructions=persona.system_instructions(printing_enabled=printing_on),
             tools=TOOLS,
             push_to_talk=push_to_talk,
         )

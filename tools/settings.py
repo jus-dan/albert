@@ -7,7 +7,14 @@ DEFAULT_SETTINGS = {
     "enabled_personas": ["albert", "albertine", "alex"],
     "interaction_mode": "vad",  # "vad" (freihaendig) oder "push_to_talk" (Leertaste)
     "show_debug_info": False,  # z.B. Audio-Chunk-Zaehler im Gespraech
+    "printing_enabled": False,
+    "selected_printer": "",  # leer = kein Drucker ausgewaehlt
 }
+
+
+def printing_active(settings: dict) -> bool:
+    """Drucken ist nur wirklich aktiv, wenn beides gesetzt ist."""
+    return bool(settings.get("printing_enabled")) and bool(settings.get("selected_printer"))
 
 
 def load_settings() -> dict:

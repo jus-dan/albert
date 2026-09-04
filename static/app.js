@@ -98,13 +98,40 @@ function addEntryNotice(message) {
 }
 
 function addPrintLink(recordId) {
-  const link = document.createElement("a");
-  link.href = `/api/wish/${encodeURIComponent(recordId)}/pdf`;
-  link.target = "_blank";
-  link.rel = "noopener";
-  link.className = "print-link";
-  link.textContent = "🖨️ Wunschzettel als PDF ansehen & ausdrucken";
-  chatLog.appendChild(link);
+  const wrap = document.createElement("div");
+  wrap.className = "print-actions";
+
+  const printButton = document.createElement("button");
+  printButton.type = "button";
+  printButton.className = "print-link";
+  printButton.textContent = "🖨️ Jetzt ausdrucken";
+  printButton.addEventListener("click", async () => {
+    printButton.disabled = true;
+    printButton.textContent = "Wird gedruckt …";
+    try {
+      const resp = await fetch(`/api/wish/${encodeURIComponent(recordId)}/print`, { method: "POST" });
+      if (resp.ok) {
+        printButton.textContent = "✅ Gedruckt";
+      } else {
+        printButton.textContent = "⚠️ Drucken fehlgeschlagen";
+        printButton.disabled = false;
+      }
+    } catch (err) {
+      printButton.textContent = "⚠️ Drucken fehlgeschlagen";
+      printButton.disabled = false;
+    }
+  });
+  wrap.appendChild(printButton);
+
+  const viewLink = document.createElement("a");
+  viewLink.href = `/api/wish/${encodeURIComponent(recordId)}/pdf`;
+  viewLink.target = "_blank";
+  viewLink.rel = "noopener";
+  viewLink.className = "print-view-link";
+  viewLink.textContent = "PDF ansehen";
+  wrap.appendChild(viewLink);
+
+  chatLog.appendChild(wrap);
   chatLog.scrollTop = chatLog.scrollHeight;
 }
 

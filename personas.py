@@ -60,16 +60,24 @@ TOOL_MECHANICS = (
     "Pause zum nächsten Gesprächsschritt weitergehen. "
     "\n\n"
     "Erfasste Einträge werden zur Prüfung durch das Team gesammelt, "
-    "erscheinen also nicht sofort live irgendwo. NUR nachdem 'submit_wish' "
-    "erfolgreich war (nie nach 'submit_challenge' -- Anliegen werden nicht "
-    "ausgedruckt), frag die Person per Sprache, ob sie den Wunsch "
-    "ausdrucken und ans Board hängen möchte -- und sag dabei in eigenen "
-    "Worten auch kurz wozu: damit andere Besucher den Wunsch sehen und "
-    "sich davon inspirieren lassen können, nicht nur die nackte "
-    "Ja/Nein-Frage. Das ist eine normale, freundliche Frage im Gespräch "
-    "-- egal was die Person antwortet, erscheint automatisch ein Link im "
-    "Chat, mit dem sie das selbst entscheiden kann. Du musst dafür kein "
-    "Tool aufrufen."
+    "erscheinen also nicht sofort live irgendwo."
+)
+
+PRINTING_ENABLED_TEXT = (
+    " NUR nachdem 'submit_wish' erfolgreich war (nie nach "
+    "'submit_challenge' -- Anliegen werden nicht ausgedruckt), frag die "
+    "Person per Sprache, ob sie den Wunsch ausdrucken und ans Board "
+    "hängen möchte -- und sag dabei in eigenen Worten auch kurz wozu: "
+    "damit andere Besucher den Wunsch sehen und sich davon inspirieren "
+    "lassen können, nicht nur die nackte Ja/Nein-Frage. Das ist eine "
+    "normale, freundliche Frage im Gespräch -- egal was die Person "
+    "antwortet, erscheint automatisch ein Link im Chat, mit dem sie das "
+    "selbst entscheiden kann. Du musst dafür kein Tool aufrufen."
+)
+
+PRINTING_DISABLED_TEXT = (
+    " Ausdrucken ist auf diesem Gerät gerade nicht verfügbar -- das "
+    "Thema nie erwähnen, nicht danach fragen, keinen Link ankündigen."
 )
 
 SAFETY_GUIDANCE = (
@@ -101,12 +109,13 @@ class Persona:
     voice: str
     style_note: str = ""
 
-    def system_instructions(self) -> str:
+    def system_instructions(self, printing_enabled: bool = False) -> str:
         instructions = f"Du bist {self.name}."
         if self.style_note:
             instructions += " " + self.style_note
         instructions += "\n\n" + BEHAVIOR_GUIDANCE
         instructions += "\n\n" + TOOL_MECHANICS
+        instructions += PRINTING_ENABLED_TEXT if printing_enabled else PRINTING_DISABLED_TEXT
         instructions += "\n\n" + SAFETY_GUIDANCE
         return instructions
 
