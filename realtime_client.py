@@ -5,6 +5,7 @@ import logging
 import time
 
 import websockets
+from langdetect import LangDetectException, detect
 
 from config import ALBERT_INSTRUCTIONS, OPENAI_API_KEY, REALTIME_MODEL, SAMPLE_RATE, VOICE
 
@@ -45,6 +46,7 @@ class RealtimeClient:
         self._recv_task = None
         self._response_active = False
         self._speech_started_at: float | None = None
+        self._language_locked = False
 
     async def connect(
         self,
@@ -82,10 +84,12 @@ class RealtimeClient:
                         "create_response": False,
                         "interrupt_response": False,
                     },
-                    # Sprache fest auf Deutsch gepinnt, damit die Erkennung
-                    # bei kurzen/unklaren Aeusserungen nicht in eine andere
-                    # Sprache (z.B. Chinesisch) abdriftet.
-                    "transcription": {"model": "gpt-4o-mini-transcribe", "language": "de"},
+                    # Sprache wird bei der ersten Aeusserung automatisch
+                    # erkannt (kein fester Wert -- koennte z.B. auch
+                    # Franzoesisch oder Italienisch sein) und danach per
+                    # _lock_language() fest eingestellt, damit sie waehrend
+                    # des Gespraechs nicht mehr abdriftet.
+                    "transcription": {"model": "gpt-4o-mini-transcribe"},
                 },
                 "output": {
                     "format": {"type": "audio/pcm", "rate": SAMPLE_RATE},
@@ -127,6 +131,25 @@ class RealtimeClient:
 
     async def cancel_response(self):
         await self._send({"type": "response.cancel"})
+
+    async def _lock_language_from_transcript(self, transcript: str):
+        # Bei der ersten echten Aeusserung die Sprache erkennen und danach
+        # fest einstellen, damit die Transkription waehrend des restlichen
+        # Gespraechs nicht mehr in eine andere Sprache abdriftet.
+        if self._language_locked or not transcript or len(transcript.strip()) < 3:
+            return
+        try:
+            lang = detect(transcript)
+        except LangDetectException:
+            return
+        self._language_locked = True
+        logger.info("Sprache erkannt und fixiert: %s", lang)
+        await self._send(
+            {
+                "type": "session.update",
+                "session": {"audio": {"input": {"transcription": {"language": lang}}}},
+            }
+        )
 
     async def _confirm_barge_in(self, started_at: float):
         # Deutlich laenger abwarten, bevor die laufende Antwort wirklich
@@ -188,11 +211,11 @@ class RealtimeClient:
                         self._on_response_start()
                 elif event_type == "response.done":
                     self._response_active = False
-                elif (
-                    event_type == "conversation.item.input_audio_transcription.completed"
-                    and self._on_user_transcript
-                ):
-                    self._on_user_transcript(event.get("transcript", ""))
+                elif event_type == "conversation.item.input_audio_transcription.completed":
+                    transcript = event.get("transcript", "")
+                    await self._lock_language_from_transcript(transcript)
+                    if self._on_user_transcript:
+                        self._on_user_transcript(transcript)
                 elif event_type == "response.function_call_arguments.done":
                     await self._handle_tool_call(event)
                 elif event_type == "input_audio_buffer.speech_started":
