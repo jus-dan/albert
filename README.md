@@ -1,15 +1,21 @@
-# Albert
+# Albert — die Wunschmaschine
 
 Ein lokaler Sprach-KI-Assistent mit drei wählbaren Personas (Albert, Albertine,
-Alex) — die "Wunschmaschine". Läuft als kleine Weboberfläche: Persona
-auswählen, Start drücken, einfach drauflos reden (kein Knopf zum Sprechen
-nötig, Albert hört durchgehend zu). Sammelt Zukunftswünsche und Anliegen von
-Besuchern und erfasst sie zur Prüfung durch das Team in Airtable.
+Alex). Läuft als kleine Weboberfläche: Persona auswählen, Start drücken,
+einfach drauflos reden. Im Gespräch führt Albert die Person vom abstrakten
+Zukunftswunsch zu einer eigenen, konkreten lokalen Idee (der
+"Wunsch-Trichter") oder nimmt ein Anliegen bzw. eine Beobachtung auf. Beides
+wird zur Prüfung durch das Team in Airtable erfasst — Wünsche lassen sich
+zusätzlich direkt ausdrucken und ans Board hängen.
 
 ## Schnellstart (empfohlen)
 
 Einfach **`Albert-starten.bat`** doppelklicken. Das Skript:
 - prüft, ob Python installiert ist (sonst kurzer Hinweis mit Download-Link)
+- fragt, welche Version laufen soll (Pfeiltasten + Enter) — Standard ist
+  "Bleiben" auf der neuesten Version, läuft nach 5 Sekunden ohne Eingabe
+  automatisch damit weiter; alternativ lässt sich auch eine ältere Version
+  (Tag) auswählen, z.B. um ein Update zu testen oder zurückzurollen
 - legt beim ersten Mal automatisch eine virtuelle Umgebung an
 - installiert/aktualisiert alle benötigten Python-Pakete automatisch
 - fragt beim allerersten Start nach den Zugangsdaten (`.env`, öffnet sich
@@ -47,33 +53,64 @@ bereits installiert sein, den Rest erledigt das Skript.
 
 `http://127.0.0.1:8000` im Browser öffnen:
 
-1. Persona auswählen (Albert / Albertine / Alex)
+1. Persona auswählen (Albert / Albertine / Alex — welche zur Auswahl stehen,
+   lässt sich in den Einstellungen festlegen)
 2. "Start" drücken — die Person verbindet sich und begrüsst dich
-3. Einfach drauflos reden — kein Knopf nötig, Albert hört durchgehend zu
-   und erkennt selbst, wann jemand spricht (Server-VAD)
-4. "Stop" beendet die Verbindung wieder, der Chatverlauf bleibt sichtbar
-5. Beim ersten Start fragt der Browser nach Mikrofonzugriff — ohne Freigabe
+3. Je nach Einstellung entweder einfach drauflos reden (freihändig, Server
+   erkennt selbst, wann jemand spricht) oder die Leertaste gedrückt halten,
+   solange man spricht (Push-to-Talk)
+4. Gibt es einen Zukunftswunsch, fragt Albert nach, was sich hier vor Ort
+   ändern würde und was man konkret tun könnte — erst dann wird erfasst.
+   Bei einem Anliegen/einer Beobachtung reicht eine kurze Bestätigung.
+5. Ist Drucken aktiviert, fragt Albert nach einem erfassten Wunsch, ob er
+   ausgedruckt werden soll — bei "Ja" wird sofort auf dem eingestellten
+   Drucker gedruckt, kein Klick auf einen Link nötig
+6. "Stop" beendet die Verbindung wieder, der Chatverlauf bleibt sichtbar
+7. Beim ersten Start fragt der Browser nach Mikrofonzugriff — ohne Freigabe
    funktioniert nur die Sprachausgabe, nicht die Spracheingabe
 
-Der Status-Badge oben zeigt jederzeit, ob die Verbindung aktiv ist.
+Der Status-Badge oben zeigt jederzeit, ob die Verbindung aktiv ist. Der
+Footer unten (auf jeder Seite gleich) verlinkt zum Themen-Board, zu den
+Einstellungen und zeigt die laufende Version.
 
 ### Weitere Seiten
 
-- **`/board.html`** — Themen-Board für einen zweiten Monitor: zeigt live,
-  wonach gesucht wurde und was neu erfasst wurde, als verschiebbare Post-its.
-  Rechtsklick auf eine Notiz zum Löschen.
+- **`/setup.html`** ("Einstellungen", auch im Footer verlinkt) — hier lässt
+  sich festlegen: welche Personen angezeigt werden, welche Stimme jede
+  Person hat (mit "Vorhören"-Knopf für einen Audio-Testsatz direkt in der
+  Seite), freihändig vs. Push-to-Talk, ob und auf welchem Drucker gedruckt
+  wird (inkl. "Testseite drucken"-Knopf, unabhängig von einem Gespräch),
+  wie viele Einträge das Themen-Board je Spalte zeigt, und ob
+  Debug-Informationen im Gespräch angezeigt werden.
+- **`/board.html`** ("Themen-Board", auch im Footer verlinkt) — für einen
+  zweiten Monitor gedacht: zeigt live und synchron aus Airtable die
+  neuesten Anliegen und Zukunftswünsche als Post-its (Anzahl je Spalte
+  einstellbar). Rechtsklick auf eine Notiz markiert sie in Airtable als
+  "rejected" (kein echtes Löschen, sondern der normale Team-Workflow).
+
+## Drucken
+
+Ist in den Einstellungen ein Drucker ausgewählt und Drucken aktiviert, kann
+ein erfasster Zukunftswunsch direkt auf Papier ausgegeben werden — per
+echtem Windows-Druckauftrag (direkt über GDI, ohne dass sich eine externe
+Anwendung öffnet), ausgelöst entweder per Sprache im Gespräch oder über den
+Button im Chat. Das Layout (Titel, Wunsch, Warum, lokale Idee, Platz für
+eine Skizze) lässt sich vorab auch als PDF unter `/api/wish/{id}/pdf`
+ansehen — beide Ausgaben nutzen denselben Aufbau.
 
 ## Airtable-Anbindung
 
 Albert erfasst per Function-Calling zwei Arten von Einträgen in der Tabelle
 `_input_pipeline` (zur Prüfung durch das Team, erscheint also nicht sofort
 live in der Datenbank):
-- **`submit_wish`**: ein Zukunftswunsch, inkl. selbst entwickelter lokaler Idee
+- **`submit_wish`**: ein Zukunftswunsch — Originalwunsch, warum er der
+  Person wichtig ist, und eine selbst entwickelte lokale Idee dazu
 - **`submit_challenge`**: ein Anliegen oder eine Beobachtung, die jemanden
   beschäftigt
 
 Alle drei Personas haben feste Leitplanken (jugendfrei, kein Bezug zu
-politischen/religiösen Themen) in ihren Instruktionen (`personas.py`).
+politischen/religiösen Themen, Schweizer Hochdeutsch ohne "ß") in ihren
+Instruktionen (`personas.py`, `persona_behavior.md`).
 
 ## Alternative: Konsolen-Variante
 
