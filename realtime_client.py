@@ -120,6 +120,20 @@ class RealtimeClient:
     async def cancel_response(self):
         await self._send({"type": "response.cancel"})
 
+    async def _confirm_barge_in(self, started_at: float):
+        # Kurz abwarten, bevor die laufende Antwort wirklich unterbrochen
+        # wird -- ein kurzes Geraeusch (Husten, Rascheln) soll Albert nicht
+        # mitten im Satz abwuergen. Nur wenn die Sprachphase, die diesen
+        # Aufruf ausgeloest hat, noch dieselbe ist (kein speech_stopped
+        # dazwischen), gilt es als echte Unterbrechung.
+        await asyncio.sleep(MIN_SPEECH_DURATION_S)
+        if self._speech_started_at != started_at:
+            return
+        if self._on_speech_started:
+            self._on_speech_started()
+        if self._response_active:
+            await self.cancel_response()
+
     async def _handle_tool_call(self, event: dict):
         call_id = event.get("call_id")
         name = event.get("name", "")
@@ -176,10 +190,7 @@ class RealtimeClient:
                 elif event_type == "input_audio_buffer.speech_started":
                     logger.info("VAD: Sprache erkannt")
                     self._speech_started_at = time.monotonic()
-                    if self._on_speech_started:
-                        self._on_speech_started()
-                    if self._response_active:
-                        await self.cancel_response()
+                    asyncio.create_task(self._confirm_barge_in(self._speech_started_at))
                 elif event_type == "input_audio_buffer.speech_stopped":
                     duration = (
                         time.monotonic() - self._speech_started_at
