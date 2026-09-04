@@ -1,6 +1,7 @@
 import json
 
 from tools import airtable_client, events
+from tools.text_utils import swiss_de
 
 TOOLS = [
     {
@@ -78,9 +79,9 @@ TOOLS = [
 
 async def dispatch(name: str, arguments: dict) -> str:
     if name == "submit_wish":
-        title = arguments.get("title", "")
-        original_wish = arguments.get("original_wish", "")
-        local_idea = arguments.get("local_idea", "")
+        title = swiss_de(arguments.get("title", ""))
+        original_wish = swiss_de(arguments.get("original_wish", ""))
+        local_idea = swiss_de(arguments.get("local_idea", ""))
         about = f"Urspruenglicher Wunsch: {original_wish}"
         if local_idea:
             about += f"\n\nKonkrete lokale Idee: {local_idea}"
@@ -100,8 +101,8 @@ async def dispatch(name: str, arguments: dict) -> str:
         )
 
     if name == "submit_challenge":
-        title = arguments.get("title", "")
-        description = arguments.get("description", "")
+        title = swiss_de(arguments.get("title", ""))
+        description = swiss_de(arguments.get("description", ""))
         result = await airtable_client.submit_contribution(
             entity_type="challenge",
             name=title,

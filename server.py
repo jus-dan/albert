@@ -12,6 +12,7 @@ from personas import GREETING_INSTRUCTIONS, PERSONAS
 from realtime_client import RealtimeClient
 from tools import airtable_client, events
 from tools.definitions import TOOLS, dispatch as dispatch_tool
+from tools.text_utils import swiss_de
 from tools.wunschzettel_pdf import build_wunschzettel_pdf
 
 LOG_FILE = Path(__file__).resolve().parent / "data" / "albert.log"
@@ -120,13 +121,17 @@ async def albert_socket(websocket: WebSocket, persona_id: str):
         )
 
     def send_transcript(delta: str):
-        asyncio.create_task(websocket.send_text(json.dumps({"type": "transcript", "delta": delta})))
+        asyncio.create_task(
+            websocket.send_text(json.dumps({"type": "transcript", "delta": swiss_de(delta)}))
+        )
 
     def send_response_start():
         asyncio.create_task(websocket.send_text(json.dumps({"type": "assistant_start"})))
 
     def send_user_transcript(transcript: str):
-        asyncio.create_task(websocket.send_text(json.dumps({"type": "user_message", "text": transcript})))
+        asyncio.create_task(
+            websocket.send_text(json.dumps({"type": "user_message", "text": swiss_de(transcript)}))
+        )
 
     def send_speech_started():
         asyncio.create_task(websocket.send_text(json.dumps({"type": "user_speaking"})))

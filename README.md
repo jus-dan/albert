@@ -48,7 +48,7 @@ bereits installiert sein, den Rest erledigt das Skript.
 `http://127.0.0.1:8000` im Browser öffnen:
 
 1. Persona auswählen (Albert / Albertine / Alex)
-2. "Start" drücken — die Person verbindet sich und begrüßt dich
+2. "Start" drücken — die Person verbindet sich und begrüsst dich
 3. Einfach drauflos reden — kein Knopf nötig, Albert hört durchgehend zu
    und erkennt selbst, wann jemand spricht (Server-VAD)
 4. "Stop" beendet die Verbindung wieder, der Chatverlauf bleibt sichtbar

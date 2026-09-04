@@ -2,6 +2,8 @@ from datetime import datetime
 
 from fpdf import FPDF
 
+from tools.text_utils import swiss_de
+
 INK = (28, 28, 28)
 INK_SOFT = (107, 107, 107)
 LINE = (217, 215, 210)
@@ -31,7 +33,8 @@ def _format_timestamp(iso: str) -> str:
 
 
 def build_wunschzettel_pdf(name: str, about: str, created_time: str, record_id: str) -> bytes:
-    wish, idea = _split_about(about or "")
+    name = swiss_de(name)
+    wish, idea = (swiss_de(part) for part in _split_about(about or ""))
 
     pdf = FPDF(unit="mm", format="A4")
     pdf.set_auto_page_break(False)
