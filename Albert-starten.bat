@@ -40,20 +40,28 @@ if exist ".git" (
 
         if "!VERSION_ACTION!"=="MAIN" (
             echo Wechsle zur neuesten Version ...
-            git checkout main --quiet 2>nul
-            git pull --ff-only 2>nul
+            git checkout main --quiet
+            if errorlevel 1 (
+                echo FEHLER beim Wechsel zu main ^(siehe Meldung oben^) -- verwende den
+                echo vorhandenen Stand.
+            ) else (
+                git pull --ff-only
+                if errorlevel 1 echo Konnte nicht aktualisieren ^(siehe Meldung oben^).
+            )
         ) else if "!VERSION_ACTION!"=="CHECKOUT" (
             echo Wechsle zu Version !VERSION_REF! ...
-            git checkout !VERSION_REF! --quiet 2>nul
+            git checkout !VERSION_REF! --quiet
+            if errorlevel 1 (
+                echo FEHLER beim Wechsel zu !VERSION_REF! ^(siehe Meldung oben^) -- verwende
+                echo den vorhandenen Stand.
+                pause
+            )
         ) else (
             for /f "delims=" %%b in ('git rev-parse --abbrev-ref HEAD 2^>nul') do set "CURRENT_BRANCH=%%b"
             if "!CURRENT_BRANCH!"=="main" (
-                git pull --ff-only 2>nul
+                git pull --ff-only
+                if errorlevel 1 echo Konnte nicht aktualisieren ^(siehe Meldung oben^).
             )
-        )
-        if errorlevel 1 (
-            echo Konnte Version nicht wechseln/aktualisieren ^(z.B. keine Internetverbindung^) --
-            echo verwende den vorhandenen Stand.
         )
         echo.
     )

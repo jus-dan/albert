@@ -132,6 +132,8 @@ Hinweis: Beide Varianten benoetigen Zugriff auf Mikrofon und Lautsprecher
 
 Wird bei jedem Tag aktualisiert.
 
+- **v1.1.8** — Fehler beim Versionswechsel (Update/Downgrade) im
+  Start-Skript sichtbar gemacht statt stillschweigend zu verwerfen
 - **v1.1.7** — Changelog eingefuehrt, damit jedes Tag eine echte
   Aenderung dokumentiert
 - **v1.1.6** — README auf aktuellen Stand gebracht, Versions-Menue beim
