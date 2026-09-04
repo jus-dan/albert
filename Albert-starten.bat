@@ -7,7 +7,7 @@ echo   Albert wird vorbereitet ...
 echo ============================================
 echo.
 
-rem --- Neueste Version von GitHub holen, falls dies ein Git-Repo ist ---
+rem --- Version waehlen und von GitHub holen, falls dies ein Git-Repo ist ---
 if exist ".git" (
     where git >nul 2>nul
     if errorlevel 1 (
@@ -20,11 +20,40 @@ if exist ".git" (
         )
         echo.
     ) else (
-        echo Hole neueste Version von GitHub ...
-        git pull --ff-only 2>nul
+        set "VERSION_RESULT_FILE=%TEMP%\albert_version_choice_%RANDOM%.txt"
+        if exist "!VERSION_RESULT_FILE!" del "!VERSION_RESULT_FILE!" >nul 2>nul
+
+        where powershell >nul 2>nul
+        if not errorlevel 1 (
+            powershell -NoProfile -ExecutionPolicy Bypass -File "select-version.ps1" -ResultFile "!VERSION_RESULT_FILE!"
+        )
+
+        set "VERSION_ACTION=STAY"
+        set "VERSION_REF="
+        if exist "!VERSION_RESULT_FILE!" (
+            for /f "usebackq tokens=1,2 delims=|" %%a in ("!VERSION_RESULT_FILE!") do (
+                set "VERSION_ACTION=%%a"
+                set "VERSION_REF=%%b"
+            )
+            del "!VERSION_RESULT_FILE!" >nul 2>nul
+        )
+
+        if "!VERSION_ACTION!"=="MAIN" (
+            echo Wechsle zur neuesten Version ...
+            git checkout main --quiet 2>nul
+            git pull --ff-only 2>nul
+        ) else if "!VERSION_ACTION!"=="CHECKOUT" (
+            echo Wechsle zu Version !VERSION_REF! ...
+            git checkout !VERSION_REF! --quiet 2>nul
+        ) else (
+            for /f "delims=" %%b in ('git rev-parse --abbrev-ref HEAD 2^>nul') do set "CURRENT_BRANCH=%%b"
+            if "!CURRENT_BRANCH!"=="main" (
+                git pull --ff-only 2>nul
+            )
+        )
         if errorlevel 1 (
-            echo Konnte nicht automatisch aktualisieren ^(z.B. keine Internetverbindung
-            echo oder lokale Aenderungen^) -- verwende den vorhandenen Stand.
+            echo Konnte Version nicht wechseln/aktualisieren ^(z.B. keine Internetverbindung^) --
+            echo verwende den vorhandenen Stand.
         )
         echo.
     )
