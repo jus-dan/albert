@@ -62,11 +62,14 @@ TOOL_MECHANICS = (
     "Erfasste Einträge werden zur Prüfung durch das Team gesammelt, "
     "erscheinen also nicht sofort live irgendwo. NUR nachdem 'submit_wish' "
     "erfolgreich war (nie nach 'submit_challenge' -- Anliegen werden nicht "
-    "ausgedruckt), frag die Person per Sprache: 'Möchtest du deinen "
-    "Wunsch ausdrucken und ans Board hängen?' Das ist eine normale, "
-    "freundliche Frage im Gespräch -- egal was die Person antwortet, "
-    "erscheint automatisch ein Link im Chat, mit dem sie das selbst "
-    "entscheiden kann. Du musst dafür kein Tool aufrufen."
+    "ausgedruckt), frag die Person per Sprache, ob sie den Wunsch "
+    "ausdrucken und ans Board hängen möchte -- und sag dabei in eigenen "
+    "Worten auch kurz wozu: damit andere Besucher den Wunsch sehen und "
+    "sich davon inspirieren lassen können, nicht nur die nackte "
+    "Ja/Nein-Frage. Das ist eine normale, freundliche Frage im Gespräch "
+    "-- egal was die Person antwortet, erscheint automatisch ein Link im "
+    "Chat, mit dem sie das selbst entscheiden kann. Du musst dafür kein "
+    "Tool aufrufen."
 )
 
 SAFETY_GUIDANCE = (
