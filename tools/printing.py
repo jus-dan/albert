@@ -43,9 +43,7 @@ def _rgb(r: int, g: int, b: int) -> int:
     return r | (g << 8) | (b << 16)
 
 
-INK = _rgb(28, 28, 28)
-INK_SOFT = _rgb(107, 107, 107)
-LINE_GRAY = _rgb(217, 215, 210)
+INK = _rgb(0, 0, 0)
 
 
 def print_wunschzettel_directly(
@@ -55,14 +53,15 @@ def print_wunschzettel_directly(
     keine externe Anwendung, die ein Fenster oeffnen oder haengenbleiben
     koennte. Layout spiegelt bewusst 1:1 das Layout von
     tools/wunschzettel_pdf.py (Vorschau-PDF), damit beide immer gleich
-    aussehen."""
+    aussehen. Bewusst komplett schwarz -- Graustufen kommen auf diesem
+    Drucker unsauber/gerastert raus."""
     if not PRINTING_AVAILABLE:
         raise RuntimeError("Drucken ist auf diesem System nicht verfuegbar (pywin32 fehlt).")
 
     from tools.text_utils import format_timestamp, split_about, swiss_de
 
-    name = swiss_de(name) or "Ein Wunsch für hier"
     wish, idea = (swiss_de(part) for part in split_about(about or ""))
+    wish = wish or swiss_de(name) or "etwas, das hier vor Ort besser wird"
     timestamp = format_timestamp(created_time)
 
     hdc = win32ui.CreateDC()
@@ -93,47 +92,33 @@ def print_wunschzettel_directly(
         width, _ = hdc.GetTextExtent(text)
         hdc.TextOut(right_px - width, mm_y(y_mm), text)
 
-    def hline(y_mm: float, color: int) -> None:
-        hdc.SelectObject(win32ui.CreatePen(win32con.PS_SOLID, 1, color))
+    def hline(y_mm: float) -> None:
+        hdc.SelectObject(win32ui.CreatePen(win32con.PS_SOLID, 1, INK))
         hdc.MoveTo((left_px, mm_y(y_mm)))
         hdc.LineTo((right_px, mm_y(y_mm)))
 
     hdc.StartDoc("Wunschzettel")
     hdc.StartPage()
+    hdc.SetTextColor(INK)
 
     y = 25.0
-    hdc.SetTextColor(INK)
     hdc.SelectObject(win32ui.CreateFont({"name": "Arial", "height": pt(26), "weight": 700}))
     centered("WUNSCHMASCHINE", y)
-    y += 15
+    y += 20
 
-    hdc.SetTextColor(INK_SOFT)
-    hdc.SelectObject(win32ui.CreateFont({"name": "Arial", "height": pt(9), "weight": 700}))
-    centered("IM GESPRÄCH ERFASST", y)
-    y += 10
-
-    hdc.SetTextColor(INK)
-    hdc.SelectObject(win32ui.CreateFont({"name": "Arial", "height": pt(15), "italic": 1}))
-    for line in _wrap_by_width(hdc, name, max_text_width_px):
-        centered(line, y)
-        y += 8
+    hdc.SelectObject(win32ui.CreateFont({"name": "Arial", "height": pt(17), "weight": 700}))
+    for line in _wrap_by_width(hdc, f"Ich wünsche mir {wish}", max_text_width_px):
+        hdc.TextOut(left_px, mm_y(y), line)
+        y += 9
     y += 3
 
-    hline(y, INK)
+    hline(y)
     y += 8
 
-    hdc.SelectObject(win32ui.CreateFont({"name": "Arial", "height": pt(13), "italic": 1}))
-    for line in _wrap_by_width(hdc, f'"{wish or "-"}"', max_text_width_px):
-        hdc.TextOut(left_px, mm_y(y), line)
-        y += 8
-    y += 4
-
     if idea:
-        hdc.SetTextColor(INK_SOFT)
-        hdc.SelectObject(win32ui.CreateFont({"name": "Arial", "height": pt(8), "weight": 700}))
-        hdc.TextOut(left_px, mm_y(y), "UND WAS DAS HIER VOR ORT BEDEUTEN KÖNNTE")
-        y += 6
-        hdc.SetTextColor(INK)
+        hdc.SelectObject(win32ui.CreateFont({"name": "Arial", "height": pt(10), "weight": 700}))
+        hdc.TextOut(left_px, mm_y(y), "Wie könnte man das umsetzen?")
+        y += 7
         hdc.SelectObject(win32ui.CreateFont({"name": "Arial", "height": pt(12)}))
         for line in _wrap_by_width(hdc, idea, max_text_width_px):
             hdc.TextOut(left_px, mm_y(y), line)
@@ -141,7 +126,7 @@ def print_wunschzettel_directly(
 
     sketch_top = max(y + 8, 160)
     sketch_bottom = 260
-    hdc.SelectObject(win32ui.CreatePen(win32con.PS_SOLID, 1, LINE_GRAY))
+    hdc.SelectObject(win32ui.CreatePen(win32con.PS_SOLID, 1, INK))
     x0, x1 = left_px, right_px
     y0, y1 = mm_y(sketch_top), mm_y(sketch_bottom)
     hdc.MoveTo((x0, y0))
@@ -149,16 +134,13 @@ def print_wunschzettel_directly(
     hdc.LineTo((x1, y1))
     hdc.LineTo((x0, y1))
     hdc.LineTo((x0, y0))
-    hdc.SetTextColor(INK_SOFT)
     hdc.SelectObject(win32ui.CreateFont({"name": "Arial", "height": pt(8)}))
-    hdc.TextOut(left_px + mm_x(4), mm_y(sketch_bottom - 8), "Platz für eine Skizze")
+    hdc.TextOut(left_px + mm_x(4), mm_y(sketch_bottom - 8), "Platz für eine Skizze oder Ergänzungen")
 
     foot_y = 272
-    hline(foot_y, LINE_GRAY)
-    hdc.SetTextColor(INK_SOFT)
+    hline(foot_y)
     hdc.SelectObject(win32ui.CreateFont({"name": "Arial", "height": pt(8)}))
     hdc.TextOut(left_px, mm_y(foot_y + 2), timestamp)
-    hdc.SetTextColor(INK)
     hdc.SelectObject(win32ui.CreateFont({"name": "Arial", "height": pt(8), "weight": 700}))
     right_aligned(f"ID {record_id}", foot_y + 2)
 
