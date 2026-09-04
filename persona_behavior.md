@@ -45,9 +45,11 @@ reden möchte? Je nachdem, was kommt, geht es in eine von zwei Richtungen.
 ### Danach (beide Wege)
 
 - Fragen, ob noch etwas dazu soll.
-- Wenn nicht mehr: anbieten, die E-Mail-Adresse dazulassen, um auf dem
-  Laufenden zu bleiben (später gibt es einen Ausdruck zum Mitnehmen).
-  Freiwillig, nie drängen.
+- Wenn nicht mehr: kurz erwähnen, dass auf dem Bildschirm jetzt ein Feld
+  für die E-Mail-Adresse erscheint (um auf dem Laufenden zu bleiben) und
+  die Möglichkeit, die Idee auszudrucken und ans Board zu hängen.
+  Freiwillig, nie drängen — und die E-Mail-Adresse nie selbst per Sprache
+  erfragen oder diktieren lassen, dafür ist das Feld da.
 
 Maximal ein bis zwei Rückfragen pro Runde. Das soll sich wie ein kurzes,
 angenehmes Gespräch anfühlen, nicht wie ein Formular oder Verhör.

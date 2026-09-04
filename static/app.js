@@ -11,6 +11,10 @@ const micWarning = document.getElementById("mic-warning");
 const micIndicator = document.getElementById("mic-indicator");
 const chatLog = document.getElementById("chat-log");
 const backButton = document.getElementById("back-button");
+const emailCapture = document.getElementById("email-capture");
+const emailForm = document.getElementById("email-form");
+const emailInput = document.getElementById("email-input");
+const emailFeedback = document.getElementById("email-feedback");
 
 let currentPersonaId = null;
 let socket = null;
@@ -26,6 +30,7 @@ let activeSources = [];
 let pendingUserBubbles = [];
 let currentAssistantBubble = null;
 let currentReveal = null;
+let emailTargetRecordId = null;
 
 const REVEAL_CHARS_PER_SEC = 24;
 
@@ -89,19 +94,32 @@ function addEntryNotice(message) {
   const typeLabel = ENTITY_TYPE_LABELS[message.entity_type] || message.entity_type;
   notice.textContent = `Neuer Eintrag erfasst: "${message.name}" (${typeLabel}) — Tabelle ${message.table}, ID ${message.record_id}`;
 
-  if (message.entity_type === "future_wish" && message.record_id) {
-    const link = document.createElement("a");
-    link.href = `/wunschzettel.html?id=${encodeURIComponent(message.record_id)}`;
-    link.target = "_blank";
-    link.rel = "noopener";
-    link.textContent = "Wunschzettel ansehen";
-    link.className = "entry-notice-link";
+  if (message.record_id) {
     notice.appendChild(document.createElement("br"));
-    notice.appendChild(link);
+    const printPrompt = document.createElement("span");
+    printPrompt.className = "entry-print-prompt";
+    printPrompt.textContent = "Möchtest du deine Idee ausdrucken und ans Board hängen? ";
+    notice.appendChild(printPrompt);
+
+    const printButton = document.createElement("button");
+    printButton.type = "button";
+    printButton.className = "entry-print-button";
+    printButton.textContent = "🖨️ Ausdrucken";
+    printButton.addEventListener("click", () => {
+      window.open(`/wunschzettel.html?id=${encodeURIComponent(message.record_id)}`, "_blank", "noopener");
+    });
+    notice.appendChild(printButton);
   }
 
   chatLog.appendChild(notice);
   chatLog.scrollTop = chatLog.scrollHeight;
+
+  if (message.record_id) {
+    emailTargetRecordId = message.record_id;
+    emailCapture.hidden = false;
+    emailFeedback.hidden = true;
+    emailInput.value = "";
+  }
 }
 
 function floatTo16BitPCM(float32Array) {
@@ -278,6 +296,9 @@ async function startSession() {
   currentAssistantBubble = null;
   currentReveal = null;
   pendingUserBubbles = [];
+  emailTargetRecordId = null;
+  emailCapture.hidden = true;
+  emailFeedback.hidden = true;
 
   connectSocket(currentPersonaId);
   setupMic();
@@ -312,6 +333,9 @@ function selectPersona(personaId) {
   chatLog.innerHTML = "";
   micWarning.hidden = true;
   micIndicator.hidden = true;
+  emailCapture.hidden = true;
+  emailFeedback.hidden = true;
+  emailTargetRecordId = null;
   setStatus("inactive", "Inaktiv");
 }
 
@@ -332,6 +356,33 @@ backButton.addEventListener("click", () => {
   currentPersonaId = null;
   conversation.hidden = true;
   personaSelect.hidden = false;
+});
+
+emailForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (!emailTargetRecordId) return;
+  const email = emailInput.value.trim();
+  if (!email) return;
+
+  try {
+    const resp = await fetch(`/api/entry/${encodeURIComponent(emailTargetRecordId)}/email`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    emailFeedback.hidden = false;
+    if (resp.ok) {
+      emailFeedback.textContent = "Danke, gespeichert!";
+      emailFeedback.classList.remove("email-feedback-error");
+    } else {
+      emailFeedback.textContent = "Konnte nicht gespeichert werden.";
+      emailFeedback.classList.add("email-feedback-error");
+    }
+  } catch (err) {
+    emailFeedback.hidden = false;
+    emailFeedback.textContent = "Konnte nicht gespeichert werden (Netzwerkfehler).";
+    emailFeedback.classList.add("email-feedback-error");
+  }
 });
 
 document.addEventListener("keydown", (event) => {

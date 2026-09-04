@@ -85,11 +85,11 @@
     opacity: 0.6;
   }
 
-  .note-search {
+  .note-challenge {
     background: #f5e17a;
   }
 
-  .note-contribution {
+  .note-wish {
     background: #a8e6a3;
   }
 
@@ -140,12 +140,12 @@
 
     <div class="board-columns">
       <section class="board-zone">
-        <h2>Was Leute wissen wollten</h2>
-        <div id="surface-search" class="board-surface"></div>
+        <h2>Challenges — was die Leute beschäftigt</h2>
+        <div id="surface-challenge" class="board-surface"></div>
       </section>
       <section class="board-zone">
-        <h2>Was neu dazugekommen ist</h2>
-        <div id="surface-contribution" class="board-surface"></div>
+        <h2>Wunschbarkeiten — was sich die Leute wünschen</h2>
+        <div id="surface-wish" class="board-surface"></div>
       </section>
     </div>
   </main>
@@ -167,22 +167,17 @@
     const MAX_NOTES = 30;
 
     const ENTITY_LABELS = {
-      initiative: "Initiative",
-      organization: "Organisation",
-      person: "Person",
       future_wish: "Zukunftswunsch",
       challenge: "Challenge",
-      event: "Event",
-      all: "Suche",
     };
 
     const surfaces = {
-      search: document.getElementById("surface-search"),
-      contribution: document.getElementById("surface-contribution"),
+      challenge: document.getElementById("surface-challenge"),
+      wish: document.getElementById("surface-wish"),
     };
 
     // key -> { el, x, y }
-    const known = { search: new Map(), contribution: new Map() };
+    const known = { challenge: new Map(), wish: new Map() };
 
     function seededRandom(seed) {
       let h = 0;
@@ -350,8 +345,8 @@
       try {
         const resp = await fetch("/api/board");
         const data = await resp.json();
-        renderZone("search", (data.searches || []).slice(0, MAX_NOTES));
-        renderZone("contribution", (data.contributions || []).slice(0, MAX_NOTES));
+        renderZone("challenge", (data.challenges || []).slice(0, MAX_NOTES));
+        renderZone("wish", (data.wishes || []).slice(0, MAX_NOTES));
       } catch (err) {
         /* naechster Poll versucht es erneut */
       }

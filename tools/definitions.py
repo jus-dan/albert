@@ -73,26 +73,6 @@ TOOLS = [
             "required": ["title", "description"],
         },
     },
-    {
-        "type": "function",
-        "name": "save_contact_email",
-        "description": (
-            "Speichert die E-Mail-Adresse der Person beim zuletzt erfassten "
-            "Eintrag (Wunsch oder Anliegen), damit sie auf dem Laufenden "
-            "bleibt und spaeter einen Ausdruck bekommt. Nur aufrufen, wenn "
-            "die Person das moechte und vorher schon etwas erfasst wurde."
-        ),
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string",
-                    "description": "Die E-Mail-Adresse der Person.",
-                },
-            },
-            "required": ["email"],
-        },
-    },
 ]
 
 

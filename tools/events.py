@@ -42,6 +42,16 @@ def recent_events(kind: str, limit: int = 30) -> list[dict]:
     return matches[:limit]
 
 
+def recent_events_by_entity(kind: str, entity_type: str, limit: int = 30) -> list[dict]:
+    matches = [
+        e
+        for e in _read_all()
+        if e.get("kind") == kind and e.get("entity_type") == entity_type and not e.get("deleted")
+    ]
+    matches.reverse()
+    return matches[:limit]
+
+
 def delete_event(event_id: str) -> bool:
     entries = _read_all()
     found = False

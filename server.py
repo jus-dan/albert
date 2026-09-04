@@ -51,8 +51,8 @@ async def api_search(entity_type: str, query: str = ""):
 @app.get("/api/board")
 async def api_board():
     return {
-        "searches": events.recent_events("search", limit=30),
-        "contributions": events.recent_events("contribution", limit=30),
+        "challenges": events.recent_events_by_entity("contribution", "challenge", limit=30),
+        "wishes": events.recent_events_by_entity("contribution", "future_wish", limit=30),
     }
 
 
@@ -76,6 +76,19 @@ async def api_wish(record_id: str):
         "name": fields.get("name", ""),
         "about": fields.get("about", ""),
     }
+
+
+@app.post("/api/entry/{record_id}/email")
+async def api_entry_email(record_id: str, payload: dict):
+    email = (payload.get("email") or "").strip()
+    if not email:
+        raise HTTPException(status_code=400, detail="E-Mail-Adresse fehlt.")
+    try:
+        await airtable_client.update_record("_input_pipeline", record_id, {"contact_email": email})
+    except Exception:
+        logger.exception("Konnte E-Mail nicht speichern (%s)", record_id)
+        raise HTTPException(status_code=500, detail="Konnte E-Mail nicht speichern.")
+    return {"status": "ok"}
 
 
 @app.websocket("/ws/{persona_id}")
@@ -102,30 +115,13 @@ async def albert_socket(websocket: WebSocket, persona_id: str):
     def send_user_transcript(transcript: str):
         asyncio.create_task(websocket.send_text(json.dumps({"type": "user_message", "text": transcript})))
 
-    last_record_id = None
-
     ENTRY_ENTITY_TYPE = {
         "submit_wish": "future_wish",
         "submit_challenge": "challenge",
     }
 
     async def handle_tool_call(name: str, arguments: dict) -> str:
-        nonlocal last_record_id
         logger.info("Tool-Aufruf: %s(%s)", name, arguments)
-
-        if name == "save_contact_email":
-            if not last_record_id:
-                return json.dumps({"error": "Noch nichts erfasst."})
-            try:
-                await airtable_client.update_record(
-                    "_input_pipeline",
-                    last_record_id,
-                    {"contact_email": arguments.get("email", "")},
-                )
-                return json.dumps({"status": "ok"})
-            except Exception:
-                logger.exception("Konnte E-Mail nicht speichern")
-                return json.dumps({"error": "Konnte E-Mail nicht speichern."})
 
         result = await dispatch_tool(name, arguments)
 
@@ -135,8 +131,6 @@ async def albert_socket(websocket: WebSocket, persona_id: str):
             except json.JSONDecodeError:
                 parsed = {}
             if parsed.get("status") == "ok":
-                if name in ("submit_wish", "submit_challenge"):
-                    last_record_id = parsed.get("record_id")
                 display_name = arguments.get("name") or arguments.get("title", "")
                 entity_type = arguments.get("entity_type") or ENTRY_ENTITY_TYPE.get(name, "")
                 await websocket.send_text(
