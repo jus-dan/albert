@@ -10,7 +10,7 @@ from fastapi.staticfiles import StaticFiles
 
 from personas import PERSONAS, greeting_instructions
 from realtime_client import RealtimeClient
-from tools import airtable_client, events
+from tools import airtable_client
 from tools.definitions import TOOLS, dispatch as dispatch_tool
 from tools.printing import list_printers, print_pdf_bytes
 from tools.settings import load_settings, printing_active, save_settings
@@ -77,12 +77,19 @@ async def api_set_settings(payload: dict):
     selected_printer = payload.get("selected_printer") or ""
     if selected_printer and selected_printer not in list_printers():
         raise HTTPException(status_code=400, detail="Unbekannter Drucker.")
+    try:
+        board_item_limit = int(payload.get("board_item_limit", 15))
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=400, detail="Ungueltige Anzahl fuer das Themen-Board.")
+    if not 1 <= board_item_limit <= 50:
+        raise HTTPException(status_code=400, detail="Anzahl muss zwischen 1 und 50 liegen.")
     settings = {
         "enabled_personas": enabled,
         "interaction_mode": mode,
         "show_debug_info": show_debug_info,
         "printing_enabled": bool(payload.get("printing_enabled", False)),
         "selected_printer": selected_printer,
+        "board_item_limit": board_item_limit,
     }
     save_settings(settings)
     return settings
@@ -95,15 +102,21 @@ async def api_printers():
 
 @app.get("/api/board")
 async def api_board():
-    return {
-        "challenges": events.recent_events_by_entity("contribution", "challenge", limit=30),
-        "wishes": events.recent_events_by_entity("contribution", "future_wish", limit=30),
-    }
+    limit = load_settings().get("board_item_limit", 15)
+    challenges = await airtable_client.list_recent_entries("challenge", limit)
+    wishes = await airtable_client.list_recent_entries("future_wish", limit)
+    for entry in challenges:
+        entry["entity_type"] = "challenge"
+    for entry in wishes:
+        entry["entity_type"] = "future_wish"
+    return {"challenges": challenges, "wishes": wishes}
 
 
-@app.delete("/api/board/{event_id}")
-async def api_board_delete(event_id: str):
-    if not events.delete_event(event_id):
+@app.delete("/api/board/{record_id}")
+async def api_board_delete(record_id: str):
+    try:
+        await airtable_client.update_record("_input_pipeline", record_id, {"triage_status": "rejected"})
+    except Exception:
         raise HTTPException(status_code=404, detail="Eintrag nicht gefunden.")
     return {"status": "ok"}
 

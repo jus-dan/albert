@@ -9,6 +9,7 @@ DEFAULT_SETTINGS = {
     "show_debug_info": False,  # z.B. Audio-Chunk-Zaehler im Gespraech
     "printing_enabled": False,
     "selected_printer": "",  # leer = kein Drucker ausgewaehlt
+    "board_item_limit": 15,  # neueste N Challenges bzw. N Wuensche auf dem Themen-Board
 }
 
 

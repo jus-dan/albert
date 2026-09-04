@@ -66,3 +66,45 @@ async def get_record(table: str, record_id: str) -> dict:
         resp = await client.get(f"{BASE_URL}/{table}/{record_id}", headers=_headers())
         resp.raise_for_status()
         return resp.json()
+
+
+async def update_record(table: str, record_id: str, fields: dict) -> None:
+    async with httpx.AsyncClient(timeout=15) as client:
+        resp = await client.patch(
+            f"{BASE_URL}/{table}/{record_id}",
+            headers=_headers(),
+            json={"fields": fields},
+        )
+        resp.raise_for_status()
+
+
+async def list_recent_entries(challenge_framing: str, limit: int) -> list[dict]:
+    """Neueste _input_pipeline-Eintraege eines Typs (challenge/future_wish),
+    live aus Airtable -- schliesst abgelehnte/doppelte Eintraege aus.
+    Direkt aus der Datenbank gelesen, kein lokaler Cache, der veralten
+    koennte."""
+    formula = (
+        f"AND({{challenge_framing}}='{challenge_framing}', "
+        f"NOT(OR({{triage_status}}='rejected', {{triage_status}}='duplicate')))"
+    )
+    async with httpx.AsyncClient(timeout=15) as client:
+        resp = await client.get(
+            f"{BASE_URL}/_input_pipeline",
+            headers=_headers(),
+            params={"filterByFormula": formula, "maxRecords": 100},
+        )
+        resp.raise_for_status()
+        records = resp.json().get("records", [])
+
+    records.sort(key=lambda r: r.get("createdTime", ""), reverse=True)
+    results = []
+    for r in records[:limit]:
+        fields = r.get("fields", {})
+        results.append(
+            {
+                "id": r.get("id"),
+                "label": fields.get("name", ""),
+                "timestamp": r.get("createdTime", ""),
+            }
+        )
+    return results

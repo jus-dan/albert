@@ -97,6 +97,18 @@
     </fieldset>
 
     <fieldset>
+      <legend>Themen-Board</legend>
+      <label class="option" style="display:block;">
+        Anzahl Einträge pro Spalte (neueste zuerst)
+        <input type="number" id="board-limit-input" min="1" max="50" style="width:100%; padding:0.5rem 0.6rem; border-radius:8px; border:1px solid var(--card-border); background:var(--bg); color:var(--text); font-size:0.9rem; margin-top:0.5rem;" />
+      </label>
+      <p class="hint">
+        Zeigt live die neuesten Challenges bzw. Wünsche direkt aus der
+        Datenbank — immer synchron, kein separater lokaler Zwischenspeicher.
+      </p>
+    </fieldset>
+
+    <fieldset>
       <legend>Diagnose</legend>
       <label class="option">
         <input type="checkbox" id="debug-checkbox" />
@@ -115,6 +127,7 @@
     const printingCheckbox = document.getElementById("printing-checkbox");
     const printerSelect = document.getElementById("printer-select");
     const printerHint = document.getElementById("printer-hint");
+    const boardLimitInput = document.getElementById("board-limit-input");
     const saveButton = document.getElementById("save-button");
     const feedback = document.getElementById("feedback");
 
@@ -152,6 +165,7 @@
         });
         debugCheckbox.checked = !!data.show_debug_info;
         printingCheckbox.checked = !!data.printing_enabled;
+        boardLimitInput.value = data.board_item_limit || 15;
         await loadPrinters(data.selected_printer || "");
       } catch (err) {
         feedback.hidden = false;
@@ -175,6 +189,7 @@
       const show_debug_info = debugCheckbox.checked;
       const printing_enabled = printingCheckbox.checked;
       const selected_printer = printerSelect.value;
+      const board_item_limit = parseInt(boardLimitInput.value, 10) || 15;
 
       try {
         const resp = await fetch("/api/settings", {
@@ -186,6 +201,7 @@
             show_debug_info,
             printing_enabled,
             selected_printer,
+            board_item_limit,
           }),
         });
         feedback.hidden = false;

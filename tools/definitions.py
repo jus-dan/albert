@@ -1,6 +1,6 @@
 import json
 
-from tools import airtable_client, events
+from tools import airtable_client
 from tools.text_utils import swiss_de
 
 TOOLS = [
@@ -98,8 +98,6 @@ async def dispatch(name: str, arguments: dict) -> str:
             raw_text=about,
             challenge_framing="future_wish",
         )
-        contact_name = arguments.get("contact_name", "")
-        events.log_event("contribution", "future_wish", f"{title}" + (f" ({contact_name})" if contact_name else ""))
         return json.dumps(
             {"status": "ok", "table": result["table"], "record_id": result["record_id"]}
         )
@@ -120,8 +118,6 @@ async def dispatch(name: str, arguments: dict) -> str:
             raw_text=description,
             challenge_framing="challenge",
         )
-        contact_name = arguments.get("contact_name", "")
-        events.log_event("contribution", "challenge", f"{title}" + (f" ({contact_name})" if contact_name else ""))
         return json.dumps(
             {"status": "ok", "table": result["table"], "record_id": result["record_id"]}
         )
