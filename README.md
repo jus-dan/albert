@@ -132,7 +132,7 @@ Hinweis: Beide Varianten benoetigen Zugriff auf Mikrofon und Lautsprecher
 
 Wird bei jedem Tag aktualisiert.
 
-- **v1.1.9** — Versions-Menue vereinfacht: nur noch Tags zur Auswahl,
+- **v1.2.0** — Versions-Menue vereinfacht: nur noch Tags zur Auswahl,
   kein separater "main"-Eintrag mehr (main koennte theoretisch weiter
   sein als der letzte Tag, wenn ein Merge vergessen wird zu taggen --
   jetzt ist immer nur ein echt veroeffentlichter Stand waehlbar)
