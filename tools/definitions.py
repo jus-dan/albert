@@ -5,88 +5,38 @@ from tools import airtable_client, events
 TOOLS = [
     {
         "type": "function",
-        "name": "list_entities",
+        "name": "submit_wish",
         "description": (
-            "Sucht vorhandene Eintraege im Oekosystem und gibt Name, Typ und "
-            "Beschreibung zurueck. Durchsucht IMMER alle Kategorien gleichzeitig "
-            "(Initiativen, Organisationen UND Personen) -- du musst den Typ nicht "
-            "vorher erraten. Nutze dies, wenn der Nutzer wissen will, was es "
-            "bereits gibt."
+            "Erfasst einen Zukunftswunsch zur spaeteren Pruefung durch das Team: "
+            "den urspruenglichen Wunsch der Person UND die gemeinsam entwickelte "
+            "konkrete, lokale Idee dazu. Rufe dies erst auf, NACHDEM du mit der "
+            "Person vom abstrakten Wunsch zu einer konkreten lokalen Idee "
+            "gekommen bist -- nicht schon beim ersten, noch abstrakten Wunsch."
         ),
         "parameters": {
             "type": "object",
             "properties": {
-                "query": {
+                "title": {
+                    "type": "string",
+                    "description": "Kurzer, praegnanter Titel fuer die lokale Idee.",
+                },
+                "original_wish": {
+                    "type": "string",
+                    "description": "Der Wunsch, so wie die Person ihn zuerst geaeussert hat, z.B. 'Weltfrieden'.",
+                },
+                "local_idea": {
                     "type": "string",
                     "description": (
-                        "Optionales Suchwort, z.B. ein Thema oder Name. Leer lassen, "
-                        "um die neuesten Eintraege ganz allgemein zu zeigen."
+                        "Die gemeinsam entwickelte konkrete, lokale Idee bzw. "
+                        "Handlung, die auf diesen Wunsch einzahlt."
                     ),
                 },
-            },
-            "required": [],
-        },
-    },
-    {
-        "type": "function",
-        "name": "submit_contribution",
-        "description": (
-            "Erfasst einen neuen Beitrag (Organisation, Person, Initiative, "
-            "Challenge oder Event), den der Nutzer erzaehlt hat, zur spaeteren "
-            "Pruefung durch das Team. Nutze dies, wenn der Nutzer dir etwas Neues "
-            "mitteilen moechte. Stelle je nach Typ passende Rueckfragen, bevor du "
-            "das Tool aufrufst: bei einer Person z.B. nach Kontakt-E-Mail und "
-            "Organisation, bei einem Event nach Ort und Datum/Zeit, bei einer "
-            "Challenge, ob es eher ein akutes Problem oder ein Wunsch fuer die "
-            "Zukunft ist, bei Organisation/Initiative nach der Website."
-        ),
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "entity_type": {
+                "contact_name": {
                     "type": "string",
-                    "enum": ["organization", "person", "initiative", "challenge", "event"],
-                    "description": "Um welche Art von Beitrag es sich handelt.",
-                },
-                "name": {
-                    "type": "string",
-                    "description": "Name der Organisation, Person, Initiative, Challenge oder des Events.",
-                },
-                "about": {
-                    "type": "string",
-                    "description": "Kurze Zusammenfassung dessen, was der Nutzer erzaehlt hat.",
-                },
-                "contact_email": {
-                    "type": "string",
-                    "description": "Kontakt-E-Mail, falls genannt (v.a. bei Personen).",
-                },
-                "website": {
-                    "type": "string",
-                    "description": "Website, falls genannt.",
-                },
-                "event_location": {
-                    "type": "string",
-                    "description": "Ort des Events, falls entity_type 'event' ist.",
-                },
-                "start_date_time": {
-                    "type": "string",
-                    "description": "Start-Datum/Zeit des Events, falls entity_type 'event' ist.",
-                },
-                "end_date_time": {
-                    "type": "string",
-                    "description": "End-Datum/Zeit des Events, falls entity_type 'event' ist.",
-                },
-                "challenge_framing": {
-                    "type": "string",
-                    "enum": ["challenge", "future_wish"],
-                    "description": (
-                        "Nur falls entity_type 'challenge' ist: 'challenge' fuer ein "
-                        "akutes Problem, 'future_wish' fuer einen Wunsch/eine Idee "
-                        "fuer die Zukunft."
-                    ),
+                    "description": "Name der Person, falls freiwillig genannt (optional).",
                 },
             },
-            "required": ["entity_type", "name", "about"],
+            "required": ["title", "original_wish", "local_idea"],
         },
     },
 ]
@@ -115,6 +65,26 @@ async def dispatch(name: str, arguments: dict) -> str:
             challenge_framing=arguments.get("challenge_framing", ""),
         )
         events.log_event("contribution", arguments.get("entity_type", ""), arguments.get("name", ""))
+        return json.dumps(
+            {"status": "ok", "table": result["table"], "record_id": result["record_id"]}
+        )
+
+    if name == "submit_wish":
+        title = arguments.get("title", "")
+        original_wish = arguments.get("original_wish", "")
+        local_idea = arguments.get("local_idea", "")
+        about = f"Urspruenglicher Wunsch: {original_wish}\n\nKonkrete lokale Idee: {local_idea}"
+        result = await airtable_client.submit_contribution(
+            entity_type="challenge",
+            name=title,
+            about=about,
+            contact_email="",
+            website="",
+            raw_text=about,
+            challenge_framing="future_wish",
+        )
+        contact_name = arguments.get("contact_name", "")
+        events.log_event("contribution", "challenge", f"{title}" + (f" ({contact_name})" if contact_name else ""))
         return json.dumps(
             {"status": "ok", "table": result["table"], "record_id": result["record_id"]}
         )

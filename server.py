@@ -91,18 +91,20 @@ async def albert_socket(websocket: WebSocket, persona_id: str):
         logger.info("Tool-Aufruf: %s(%s)", name, arguments)
         result = await dispatch_tool(name, arguments)
 
-        if name == "submit_contribution":
+        if name in ("submit_contribution", "submit_wish"):
             try:
                 parsed = json.loads(result)
             except json.JSONDecodeError:
                 parsed = {}
             if parsed.get("status") == "ok":
+                display_name = arguments.get("name") or arguments.get("title", "")
+                entity_type = arguments.get("entity_type") or ("challenge" if name == "submit_wish" else "")
                 await websocket.send_text(
                     json.dumps(
                         {
                             "type": "new_entry",
-                            "name": arguments.get("name", ""),
-                            "entity_type": arguments.get("entity_type", ""),
+                            "name": display_name,
+                            "entity_type": entity_type,
                             "table": parsed.get("table"),
                             "record_id": parsed.get("record_id"),
                         }
