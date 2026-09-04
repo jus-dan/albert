@@ -1,6 +1,25 @@
 @echo off
+if "%ALBERT_RELAUNCHED%"=="1" goto :main
+
+rem --- Sich selbst in einen Temp-Ordner kopieren und von dort ausfuehren ---
+rem cmd.exe liest .bat-Dateien anhand der Byte-Position, nicht komplett im
+rem Voraus. Wuerde ein "git checkout" weiter unten diese Datei im
+rem Repo-Ordner veraendern, waehrend cmd.exe noch mitten in der Ausfuehrung
+rem ist, liest cmd.exe an der falschen Stelle weiter und fuehrt kaputte
+rem Befehle aus (beobachtet: "VERSION_ACTION" wurde zu "ION_ACTION"). Die
+rem Kopie im Temp-Ordner bleibt von einem Checkout im Repo unberuehrt.
+set "ALBERT_HOME=%~dp0"
+set "ALBERT_RELAUNCHED=1"
+set "ALBERT_SELF_COPY=%TEMP%\albert_launcher_%RANDOM%.bat"
+copy /y "%~f0" "%ALBERT_SELF_COPY%" >nul
+call "%ALBERT_SELF_COPY%"
+set "ALBERT_RC=%errorlevel%"
+del "%ALBERT_SELF_COPY%" >nul 2>nul
+exit /b %ALBERT_RC%
+
+:main
 setlocal enabledelayedexpansion
-cd /d "%~dp0"
+cd /d "%ALBERT_HOME%"
 
 echo ============================================
 echo   Albert wird vorbereitet ...

@@ -132,6 +132,13 @@ Hinweis: Beide Varianten benoetigen Zugriff auf Mikrofon und Lautsprecher
 
 Wird bei jedem Tag aktualisiert.
 
+- **v1.2.2** — Kritischen Self-Modifying-Script-Bug im Start-Skript
+  behoben: ein Versionswechsel per `git checkout` konnte die gerade
+  laufende `Albert-starten.bat` mitten in der Ausfuehrung veraendern und
+  dadurch kaputte Befehle erzeugen (auf einem echten Geraet beobachtet:
+  `ION_ACTION` statt `VERSION_ACTION`, `%b` statt der Versionsnummer).
+  Das Skript kopiert sich jetzt beim Start zuerst in einen Temp-Ordner
+  und laeuft von dort aus weiter.
 - **v1.2.1** — Toten Code entfernt (`static/wunschzettel.html`);
   Entwicklungs-Branches (alles ausser `main`) ueberspringen die
   Versionsauswahl komplett, statt bei jedem Testlauf auf einen Tag zu
