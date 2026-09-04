@@ -13,8 +13,9 @@ from realtime_client import RealtimeClient
 from tools import airtable_client
 from tools.definitions import CONFIRM_PRINT_TOOL, TOOLS, dispatch as dispatch_tool
 from tools.printing import list_printers, print_test_page, print_wunschzettel_directly
-from tools.settings import load_settings, printing_active, save_settings
+from tools.settings import DEFAULT_SETTINGS, VALID_VOICES, load_settings, printing_active, save_settings
 from tools.text_utils import swiss_de
+from tools.voice_preview import generate_voice_preview
 from tools.wunschzettel_pdf import build_wunschzettel_pdf
 
 LOG_FILE = Path(__file__).resolve().parent / "data" / "albert.log"
@@ -83,6 +84,12 @@ async def api_set_settings(payload: dict):
         raise HTTPException(status_code=400, detail="Ungueltige Anzahl fuer das Themen-Board.")
     if not 1 <= board_item_limit <= 50:
         raise HTTPException(status_code=400, detail="Anzahl muss zwischen 1 und 50 liegen.")
+    persona_voices = dict(DEFAULT_SETTINGS["persona_voices"])
+    payload_voices = payload.get("persona_voices")
+    if isinstance(payload_voices, dict):
+        for persona_id, voice in payload_voices.items():
+            if persona_id in PERSONAS and voice in VALID_VOICES:
+                persona_voices[persona_id] = voice
     settings = {
         "enabled_personas": enabled,
         "interaction_mode": mode,
@@ -90,6 +97,7 @@ async def api_set_settings(payload: dict):
         "printing_enabled": bool(payload.get("printing_enabled", False)),
         "selected_printer": selected_printer,
         "board_item_limit": board_item_limit,
+        "persona_voices": persona_voices,
     }
     save_settings(settings)
     return settings
@@ -98,6 +106,23 @@ async def api_set_settings(payload: dict):
 @app.get("/api/printers")
 async def api_printers():
     return {"printers": list_printers()}
+
+
+@app.get("/api/voices")
+async def api_voices():
+    return {"voices": VALID_VOICES}
+
+
+@app.get("/api/voice-preview/{voice}")
+async def api_voice_preview(voice: str):
+    if voice not in VALID_VOICES:
+        raise HTTPException(status_code=400, detail="Unbekannte Stimme.")
+    try:
+        audio = await generate_voice_preview(voice)
+    except Exception:
+        logger.exception("Sprachvorschau fehlgeschlagen (%s)", voice)
+        raise HTTPException(status_code=500, detail="Sprachvorschau fehlgeschlagen.")
+    return Response(content=audio, media_type="audio/mpeg")
 
 
 @app.post("/api/print-test")
@@ -333,10 +358,13 @@ async def albert_socket(websocket: WebSocket, persona_id: str):
     )
 
     session_tools = TOOLS + [CONFIRM_PRINT_TOOL] if printing_on else TOOLS
+    voice = settings.get("persona_voices", {}).get(persona_id) or persona.voice
+    if voice not in VALID_VOICES:
+        voice = persona.voice
 
     try:
         await client.connect(
-            voice=persona.voice,
+            voice=voice,
             instructions=persona.system_instructions(printing_enabled=printing_on),
             tools=session_tools,
             push_to_talk=push_to_talk,

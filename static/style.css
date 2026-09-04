@@ -48,21 +48,6 @@ h1 {
   gap: 1.25rem;
 }
 
-.debug-link {
-  text-align: center;
-  margin-top: 1.5rem;
-}
-
-.debug-link a {
-  color: var(--muted);
-  font-size: 0.85rem;
-  text-decoration: none;
-}
-
-.debug-link a:hover {
-  color: var(--text);
-}
-
 .version-footer {
   position: fixed;
   bottom: 0.5rem;
