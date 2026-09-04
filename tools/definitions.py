@@ -8,17 +8,20 @@ TOOLS = [
         "name": "submit_wish",
         "description": (
             "Erfasst einen Zukunftswunsch zur spaeteren Pruefung durch das Team: "
-            "den urspruenglichen Wunsch der Person UND die gemeinsam entwickelte "
-            "konkrete, lokale Idee dazu. Rufe dies erst auf, NACHDEM du mit der "
-            "Person vom abstrakten Wunsch zu einer konkreten lokalen Idee "
-            "gekommen bist -- nicht schon beim ersten, noch abstrakten Wunsch."
+            "den urspruenglichen Wunsch der Person und, falls sie selbst eine "
+            "gefunden hat, ihre eigene konkrete lokale Idee dazu. Rufe dies erst "
+            "auf, NACHDEM du der Person durch Fragen Gelegenheit gegeben hast, "
+            "vom abstrakten Wunsch zu einer eigenen konkreten Idee zu kommen -- "
+            "nicht schon beim ersten, noch abstrakten Wunsch. Wenn der Person "
+            "trotz Rueckfrage keine eigene Idee einfaellt, erfasse einfach nur "
+            "den Wunsch, ohne local_idea."
         ),
         "parameters": {
             "type": "object",
             "properties": {
                 "title": {
                     "type": "string",
-                    "description": "Kurzer, praegnanter Titel fuer die lokale Idee.",
+                    "description": "Kurzer, praegnanter Titel -- der lokalen Idee, oder sonst des Wunsches selbst.",
                 },
                 "original_wish": {
                     "type": "string",
@@ -27,8 +30,10 @@ TOOLS = [
                 "local_idea": {
                     "type": "string",
                     "description": (
-                        "Die gemeinsam entwickelte konkrete, lokale Idee bzw. "
-                        "Handlung, die auf diesen Wunsch einzahlt."
+                        "Die von der Person SELBST entwickelte konkrete, lokale "
+                        "Idee bzw. Handlung, die auf diesen Wunsch einzahlt. Nur "
+                        "ausfuellen, wenn die Idee wirklich von der Person kam, "
+                        "nicht von dir. Sonst weglassen."
                     ),
                 },
                 "contact_name": {
@@ -36,7 +41,7 @@ TOOLS = [
                     "description": "Name der Person, falls freiwillig genannt (optional).",
                 },
             },
-            "required": ["title", "original_wish", "local_idea"],
+            "required": ["title", "original_wish"],
         },
     },
     {
@@ -93,7 +98,9 @@ async def dispatch(name: str, arguments: dict) -> str:
         title = arguments.get("title", "")
         original_wish = arguments.get("original_wish", "")
         local_idea = arguments.get("local_idea", "")
-        about = f"Urspruenglicher Wunsch: {original_wish}\n\nKonkrete lokale Idee: {local_idea}"
+        about = f"Urspruenglicher Wunsch: {original_wish}"
+        if local_idea:
+            about += f"\n\nKonkrete lokale Idee: {local_idea}"
         result = await airtable_client.submit_contribution(
             entity_type="challenge",
             name=title,

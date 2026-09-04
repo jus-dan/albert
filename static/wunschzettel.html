@@ -198,6 +198,8 @@
     opacity: 0.35;
   }
 
+  [hidden] { display: none !important; }
+
   .sheet-foot {
     margin-top: auto;
     padding-top: 4mm;
@@ -250,7 +252,7 @@
 
     <div class="passage">
       <span class="lead" id="wish-text">Weltfrieden</span>
-      <span class="idea-label">Und was das hier vor Ort bedeuten könnte</span>
+      <span class="idea-label" id="idea-label">Und was das hier vor Ort bedeuten könnte</span>
       <p class="idea" id="idea-text">
         Ein gemeinsamer Nachbarschaftsgarten im Hinterhof, an dem alle
         mitmachen können.
@@ -292,9 +294,9 @@
     function splitAbout(about) {
       const marker = "Konkrete lokale Idee:";
       const idx = about.indexOf(marker);
-      if (idx === -1) return { wish: about.trim(), idea: "" };
-      const wishPart = about.slice(0, idx).replace("Urspruenglicher Wunsch:", "").trim();
-      const ideaPart = about.slice(idx + marker.length).trim();
+      const wishSection = idx === -1 ? about : about.slice(0, idx);
+      const wishPart = wishSection.replace("Urspruenglicher Wunsch:", "").trim();
+      const ideaPart = idx === -1 ? "" : about.slice(idx + marker.length).trim();
       return { wish: wishPart, idea: ideaPart };
     }
 
@@ -311,6 +313,8 @@
 
         document.getElementById("idea-title").textContent = data.name || "Ein Wunsch für hier";
         document.getElementById("wish-text").textContent = wish || "—";
+        document.getElementById("idea-label").hidden = !idea;
+        document.getElementById("idea-text").hidden = !idea;
         document.getElementById("idea-text").textContent = idea || "";
         document.getElementById("timestamp").textContent = formatTimestamp(data.created_time);
         document.getElementById("record-id").textContent = data.id || "";
