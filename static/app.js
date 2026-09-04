@@ -9,6 +9,7 @@ const statusText = document.getElementById("status-text");
 const toggleButton = document.getElementById("toggle-button");
 const micWarning = document.getElementById("mic-warning");
 const micIndicator = document.getElementById("mic-indicator");
+const audioDebug = document.getElementById("audio-debug");
 const chatLog = document.getElementById("chat-log");
 const backButton = document.getElementById("back-button");
 
@@ -25,6 +26,7 @@ let activeSources = [];
 let pendingUserBubbles = [];
 let currentAssistantBubble = null;
 let currentReveal = null;
+let sentChunkCount = 0;
 
 const REVEAL_CHARS_PER_SEC = 24;
 
@@ -230,11 +232,17 @@ async function setupMic() {
   const silentGain = audioContext.createGain();
   silentGain.gain.value = 0;
 
+  sentChunkCount = 0;
+  audioDebug.hidden = false;
+  audioDebug.textContent = "Audio-Chunks gesendet: 0";
+
   micProcessor.onaudioprocess = (event) => {
     if (!isActive || !socket || socket.readyState !== WebSocket.OPEN) return;
     const input = event.inputBuffer.getChannelData(0);
     const pcm16 = floatTo16BitPCM(input);
     socket.send(JSON.stringify({ type: "audio_chunk", audio: arrayBufferToBase64(pcm16.buffer) }));
+    sentChunkCount += 1;
+    audioDebug.textContent = `Audio-Chunks gesendet: ${sentChunkCount}`;
   };
 
   micSource.connect(micProcessor);
@@ -291,6 +299,7 @@ function stopSession() {
   toggleButton.classList.remove("toggle-stop");
   toggleButton.classList.add("toggle-start");
   micIndicator.hidden = true;
+  audioDebug.hidden = true;
   flushReveal();
 
   if (socket) {
@@ -314,6 +323,7 @@ function selectPersona(personaId) {
   chatLog.innerHTML = "";
   micWarning.hidden = true;
   micIndicator.hidden = true;
+  audioDebug.hidden = true;
   setStatus("inactive", "Inaktiv");
 }
 

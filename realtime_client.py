@@ -173,8 +173,11 @@ class RealtimeClient:
                     if self._response_active:
                         await self.cancel_response()
                 elif event_type == "input_audio_buffer.speech_stopped":
-                    logger.info("VAD: Sprachende erkannt, erzeuge Antwort")
-                    await self.create_response()
+                    if self._response_active:
+                        logger.info("VAD: Sprachende erkannt, aber schon eine Antwort aktiv -- ignoriere")
+                    else:
+                        logger.info("VAD: Sprachende erkannt, erzeuge Antwort")
+                        await self.create_response()
                 elif event_type == "error":
                     logger.error("Realtime-API-Fehler: %s", event.get("error"))
                 elif event_type in ("session.created", "session.updated"):

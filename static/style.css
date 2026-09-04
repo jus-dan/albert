@@ -207,6 +207,13 @@ h1 {
   font-size: 1rem;
 }
 
+.audio-debug {
+  margin-top: 0.4rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-family: monospace;
+}
+
 .chat-log {
   margin-top: 1.5rem;
   min-height: 3rem;
