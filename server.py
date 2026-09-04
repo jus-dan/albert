@@ -42,12 +42,9 @@ def _detect_version() -> str:
     return "unbekannt"
 
 
-APP_VERSION = _detect_version()
-
-
 @app.get("/api/version")
 async def api_version():
-    return {"version": APP_VERSION}
+    return {"version": _detect_version()}
 
 
 @app.get("/api/board")
