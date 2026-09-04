@@ -2,6 +2,7 @@ import asyncio
 import base64
 import json
 import logging
+import time
 
 import websockets
 
@@ -10,6 +11,11 @@ from config import ALBERT_INSTRUCTIONS, OPENAI_API_KEY, REALTIME_MODEL, SAMPLE_R
 logger = logging.getLogger("albert.realtime")
 
 REALTIME_URL = f"wss://api.openai.com/v1/realtime?model={REALTIME_MODEL}"
+
+# Kuerzer als das gilt nicht als echte Sprache (z.B. kurzes Anpusten des
+# Mikrofons oder ein Rascheln) -- lang genug, dass ein kurzes "Ja"/"Nein"
+# trotzdem durchkommt.
+MIN_SPEECH_DURATION_S = 0.35
 
 
 class RealtimeClient:
@@ -33,6 +39,7 @@ class RealtimeClient:
         self._ws = None
         self._recv_task = None
         self._response_active = False
+        self._speech_started_at: float | None = None
 
     async def connect(
         self,
@@ -64,7 +71,7 @@ class RealtimeClient:
                     # statt uns auf das automatische API-Verhalten zu verlassen.
                     "turn_detection": {
                         "type": "server_vad",
-                        "threshold": 0.4,
+                        "threshold": 0.55,
                         "prefix_padding_ms": 300,
                         "silence_duration_ms": 500,
                         "create_response": False,
@@ -168,15 +175,26 @@ class RealtimeClient:
                     await self._handle_tool_call(event)
                 elif event_type == "input_audio_buffer.speech_started":
                     logger.info("VAD: Sprache erkannt")
+                    self._speech_started_at = time.monotonic()
                     if self._on_speech_started:
                         self._on_speech_started()
                     if self._response_active:
                         await self.cancel_response()
                 elif event_type == "input_audio_buffer.speech_stopped":
-                    if self._response_active:
+                    duration = (
+                        time.monotonic() - self._speech_started_at
+                        if self._speech_started_at is not None
+                        else None
+                    )
+                    if duration is not None and duration < MIN_SPEECH_DURATION_S:
+                        logger.info(
+                            "VAD: Sprachende erkannt, aber nur %.2fs -- ignoriere (vermutlich Geraeusch)",
+                            duration,
+                        )
+                    elif self._response_active:
                         logger.info("VAD: Sprachende erkannt, aber schon eine Antwort aktiv -- ignoriere")
                     else:
-                        logger.info("VAD: Sprachende erkannt, erzeuge Antwort")
+                        logger.info("VAD: Sprachende erkannt (%.2fs), erzeuge Antwort", duration or 0)
                         await self.create_response()
                 elif event_type == "error":
                     logger.error("Realtime-API-Fehler: %s", event.get("error"))
