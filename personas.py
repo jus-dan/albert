@@ -1,16 +1,25 @@
 from dataclasses import dataclass
 from pathlib import Path
 
-GREETING = (
+GREETING_VAD = (
     "Hallo, da bin ich. Du kannst einfach drauflos reden, ich hoere dir zu."
 )
 
-GREETING_INSTRUCTIONS = (
-    f'Sage zuerst exakt und ohne jede Aenderung genau diesen Satz: "{GREETING}" '
-    "Frage direkt im Anschluss kurz, ob es einen Zukunftswunsch gibt -- oder "
-    "ob die Person gerade etwas beschaeftigt oder sie etwas beobachtet hat, "
-    "worueber sie reden moechte."
+GREETING_PUSH_TO_TALK = (
+    "Hallo, da bin ich. Wenn du mit mir reden willst, halte die Leertaste "
+    "gedrueckt, solange du sprichst, und lass sie los, wenn du von mir eine "
+    "Antwort haben moechtest."
 )
+
+
+def greeting_instructions(push_to_talk: bool) -> str:
+    greeting = GREETING_PUSH_TO_TALK if push_to_talk else GREETING_VAD
+    return (
+        f'Sage zuerst exakt und ohne jede Aenderung genau diesen Satz: "{greeting}" '
+        "Frage direkt im Anschluss kurz, ob es einen Zukunftswunsch gibt -- oder "
+        "ob die Person gerade etwas beschaeftigt oder sie etwas beobachtet hat, "
+        "worueber sie reden moechte."
+    )
 
 BEHAVIOR_FILE = Path(__file__).resolve().parent / "persona_behavior.md"
 

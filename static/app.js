@@ -10,6 +10,7 @@ const toggleButton = document.getElementById("toggle-button");
 const micWarning = document.getElementById("mic-warning");
 const micIndicator = document.getElementById("mic-indicator");
 const audioDebug = document.getElementById("audio-debug");
+const modeHint = document.getElementById("mode-hint");
 const chatLog = document.getElementById("chat-log");
 const backButton = document.getElementById("back-button");
 
@@ -21,6 +22,8 @@ let micSource = null;
 let micProcessor = null;
 let micReady = false;
 let isActive = false;
+let isRecording = false;
+let interactionMode = "vad";
 let playhead = 0;
 let activeSources = [];
 let pendingUserBubbles = [];
@@ -238,6 +241,7 @@ async function setupMic() {
 
   micProcessor.onaudioprocess = (event) => {
     if (!isActive || !socket || socket.readyState !== WebSocket.OPEN) return;
+    if (interactionMode === "push_to_talk" && !isRecording) return;
     const input = event.inputBuffer.getChannelData(0);
     const pcm16 = floatTo16BitPCM(input);
     socket.send(JSON.stringify({ type: "audio_chunk", audio: arrayBufferToBase64(pcm16.buffer) }));
@@ -249,7 +253,9 @@ async function setupMic() {
   micProcessor.connect(silentGain);
   silentGain.connect(audioContext.destination);
   micReady = true;
-  micIndicator.hidden = false;
+  if (interactionMode !== "push_to_talk") {
+    micIndicator.hidden = false;
+  }
 }
 
 function stopMicCapture() {
@@ -295,6 +301,7 @@ async function startSession() {
 
 function stopSession() {
   isActive = false;
+  isRecording = false;
   toggleButton.textContent = "Start";
   toggleButton.classList.remove("toggle-stop");
   toggleButton.classList.add("toggle-start");
@@ -324,12 +331,33 @@ function selectPersona(personaId) {
   micWarning.hidden = true;
   micIndicator.hidden = true;
   audioDebug.hidden = true;
+  modeHint.hidden = false;
+  modeHint.textContent =
+    interactionMode === "push_to_talk"
+      ? "Leertaste gedrückt halten zum Sprechen"
+      : "Einfach drauflos reden — kein Knopf nötig";
   setStatus("inactive", "Inaktiv");
 }
 
 document.querySelectorAll(".persona-card").forEach((btn) => {
   btn.addEventListener("click", () => selectPersona(btn.dataset.persona));
 });
+
+async function loadSettings() {
+  try {
+    const resp = await fetch("/api/settings");
+    const data = await resp.json();
+    interactionMode = data.interaction_mode || "vad";
+    const enabled = data.enabled_personas || ["albert", "albertine", "alex"];
+    document.querySelectorAll(".persona-card").forEach((btn) => {
+      btn.hidden = !enabled.includes(btn.dataset.persona);
+    });
+  } catch (err) {
+    /* Standardwerte (alle Personen, freihaendig) beibehalten */
+  }
+}
+
+loadSettings();
 
 toggleButton.addEventListener("click", () => {
   if (isActive) {
@@ -344,4 +372,30 @@ backButton.addEventListener("click", () => {
   currentPersonaId = null;
   conversation.hidden = true;
   personaSelect.hidden = false;
+});
+
+document.addEventListener("keydown", (event) => {
+  if (interactionMode !== "push_to_talk") return;
+  if (event.code !== "Space" || conversation.hidden || event.repeat) return;
+  event.preventDefault();
+  if (!isActive || !micReady || isRecording) return;
+  isRecording = true;
+  micIndicator.hidden = false;
+  stopPlaybackForBargeIn();
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify({ type: "interrupt" }));
+  }
+});
+
+document.addEventListener("keyup", (event) => {
+  if (interactionMode !== "push_to_talk") return;
+  if (event.code !== "Space" || conversation.hidden) return;
+  event.preventDefault();
+  if (!isRecording) return;
+  isRecording = false;
+  micIndicator.hidden = true;
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify({ type: "commit" }));
+    pendingUserBubbles.push(addMessage("user", "…"));
+  }
 });

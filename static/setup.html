@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Albert – Einstellungen</title>
+<link rel="stylesheet" href="style.css" />
+<style>
+  body { align-items: flex-start; }
+  #setup-app { max-width: 520px; margin-top: 2rem; }
+  .back-link { color: var(--muted); text-decoration: none; font-size: 0.9rem; }
+  .back-link:hover { color: var(--text); }
+  h1 { text-align: left; margin: 1rem 0 1.5rem; }
+  fieldset {
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 1rem 1.2rem 1.2rem;
+    margin: 0 0 1.2rem;
+  }
+  legend { padding: 0 0.4rem; color: var(--text); font-weight: 600; }
+  .option { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0; font-size: 0.95rem; }
+  .option input { width: 1.1rem; height: 1.1rem; }
+  .hint { color: var(--muted); font-size: 0.85rem; margin: 0.3rem 0 0; }
+  #save-button {
+    border: none;
+    border-radius: 999px;
+    padding: 0.6rem 1.6rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    background: var(--green);
+    color: #0b0d13;
+  }
+  #save-button:hover { filter: brightness(1.1); }
+  #feedback { margin-top: 0.8rem; font-size: 0.9rem; color: var(--muted); }
+  #feedback.ok { color: var(--green); }
+  #feedback.error { color: var(--red); }
+</style>
+</head>
+<body>
+  <main id="setup-app">
+    <a class="back-link" href="/">&larr; Zurück zu Albert</a>
+    <h1>Einstellungen</h1>
+
+    <fieldset>
+      <legend>Angezeigte Personen</legend>
+      <label class="option">
+        <input type="checkbox" name="persona" value="albert" />
+        Albert
+      </label>
+      <label class="option">
+        <input type="checkbox" name="persona" value="albertine" />
+        Albertine
+      </label>
+      <label class="option">
+        <input type="checkbox" name="persona" value="alex" />
+        Alex
+      </label>
+      <p class="hint">Mindestens eine Person muss ausgewählt bleiben.</p>
+    </fieldset>
+
+    <fieldset>
+      <legend>Sprachsteuerung</legend>
+      <label class="option">
+        <input type="radio" name="mode" value="vad" />
+        Freihändig — Mikrofon hört automatisch zu
+      </label>
+      <label class="option">
+        <input type="radio" name="mode" value="push_to_talk" />
+        Leertaste gedrückt halten zum Sprechen
+      </label>
+    </fieldset>
+
+    <button id="save-button" type="button">Speichern</button>
+    <p id="feedback" hidden></p>
+  </main>
+
+  <script>
+    const PERSONA_BOXES = document.querySelectorAll('input[name="persona"]');
+    const MODE_RADIOS = document.querySelectorAll('input[name="mode"]');
+    const saveButton = document.getElementById("save-button");
+    const feedback = document.getElementById("feedback");
+
+    async function load() {
+      try {
+        const resp = await fetch("/api/settings");
+        const data = await resp.json();
+        const enabled = data.enabled_personas || [];
+        PERSONA_BOXES.forEach((box) => {
+          box.checked = enabled.includes(box.value);
+        });
+        MODE_RADIOS.forEach((radio) => {
+          radio.checked = radio.value === (data.interaction_mode || "vad");
+        });
+      } catch (err) {
+        feedback.hidden = false;
+        feedback.textContent = "Einstellungen konnten nicht geladen werden.";
+        feedback.className = "error";
+      }
+    }
+
+    async function save() {
+      const enabled_personas = [...PERSONA_BOXES].filter((b) => b.checked).map((b) => b.value);
+      const modeRadio = [...MODE_RADIOS].find((r) => r.checked);
+      const interaction_mode = modeRadio ? modeRadio.value : "vad";
+
+      if (enabled_personas.length === 0) {
+        feedback.hidden = false;
+        feedback.textContent = "Mindestens eine Person muss ausgewählt bleiben.";
+        feedback.className = "error";
+        return;
+      }
+
+      try {
+        const resp = await fetch("/api/settings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ enabled_personas, interaction_mode }),
+        });
+        feedback.hidden = false;
+        if (resp.ok) {
+          feedback.textContent = "Gespeichert.";
+          feedback.className = "ok";
+        } else {
+          const err = await resp.json().catch(() => ({}));
+          feedback.textContent = err.detail || "Konnte nicht gespeichert werden.";
+          feedback.className = "error";
+        }
+      } catch (err) {
+        feedback.hidden = false;
+        feedback.textContent = "Konnte nicht gespeichert werden (Netzwerkfehler).";
+        feedback.className = "error";
+      }
+    }
+
+    saveButton.addEventListener("click", save);
+    load();
+  </script>
+
+  <footer id="version-footer" class="version-footer"></footer>
+  <script>
+    fetch("/api/version")
+      .then((r) => r.json())
+      .then((d) => { document.getElementById("version-footer").textContent = d.version; })
+      .catch(() => {});
+  </script>
+</body>
+</html>

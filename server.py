@@ -8,10 +8,11 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException, Response, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 
-from personas import GREETING_INSTRUCTIONS, PERSONAS
+from personas import PERSONAS, greeting_instructions
 from realtime_client import RealtimeClient
 from tools import airtable_client, events
 from tools.definitions import TOOLS, dispatch as dispatch_tool
+from tools.settings import load_settings, save_settings
 from tools.text_utils import swiss_de
 from tools.wunschzettel_pdf import build_wunschzettel_pdf
 
@@ -53,6 +54,27 @@ def _detect_version() -> str:
 @app.get("/api/version")
 async def api_version():
     return {"version": _detect_version()}
+
+
+@app.get("/api/settings")
+async def api_get_settings():
+    return load_settings()
+
+
+@app.post("/api/settings")
+async def api_set_settings(payload: dict):
+    enabled = payload.get("enabled_personas")
+    mode = payload.get("interaction_mode")
+    if not isinstance(enabled, list) or not enabled:
+        raise HTTPException(status_code=400, detail="Mindestens eine Person muss aktiv sein.")
+    enabled = [p for p in enabled if p in PERSONAS]
+    if not enabled:
+        raise HTTPException(status_code=400, detail="Ungueltige Personen-Auswahl.")
+    if mode not in ("vad", "push_to_talk"):
+        raise HTTPException(status_code=400, detail="Ungueltiger Modus.")
+    settings = {"enabled_personas": enabled, "interaction_mode": mode}
+    save_settings(settings)
+    return settings
 
 
 @app.get("/api/board")
@@ -181,11 +203,15 @@ async def albert_socket(websocket: WebSocket, persona_id: str):
         on_speech_started=send_speech_started,
     )
 
+    settings = load_settings()
+    push_to_talk = settings.get("interaction_mode") == "push_to_talk"
+
     try:
         await client.connect(
             voice=persona.voice,
             instructions=persona.system_instructions(),
             tools=TOOLS,
+            push_to_talk=push_to_talk,
         )
     except Exception:
         logger.exception("Verbindungsaufbau zur Realtime-API fehlgeschlagen (%s)", persona.name)
@@ -196,7 +222,7 @@ async def albert_socket(websocket: WebSocket, persona_id: str):
         return
 
     await websocket.send_text(json.dumps({"type": "status", "status": "ready", "persona": persona.name}))
-    await client.create_response(instructions=GREETING_INSTRUCTIONS)
+    await client.create_response(instructions=greeting_instructions(push_to_talk))
 
     audio_chunk_count = 0
     audio_byte_total = 0
@@ -218,6 +244,10 @@ async def albert_socket(websocket: WebSocket, persona_id: str):
                         audio_chunk_count,
                         audio_byte_total,
                     )
+            elif msg_type == "commit":
+                await client.commit_and_respond()
+            elif msg_type == "interrupt":
+                await client.cancel_response()
     except WebSocketDisconnect:
         logger.info("Browser-Verbindung getrennt (%s)", persona.name)
     except Exception:

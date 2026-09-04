@@ -74,6 +74,7 @@
 
       <button id="toggle-button" class="toggle-button toggle-start" type="button">Start</button>
 
+      <p id="mode-hint" class="hint" hidden></p>
       <p id="mic-warning" class="mic-warning" hidden>
         Kein Mikrofonzugriff — Sprechen ist nicht möglich.
       </p>
@@ -83,12 +84,16 @@
       <div id="chat-log" class="chat-log"></div>
     </section>
   </main>
-  <footer id="version-footer" class="version-footer"></footer>
+  <footer id="version-footer" class="version-footer">
+    <a href="/setup.html">Einstellungen</a>
+    &nbsp;·&nbsp;
+    <span id="version-text"></span>
+  </footer>
   <script src="app.js"></script>
   <script>
     fetch("/api/version")
       .then((r) => r.json())
-      .then((d) => { document.getElementById("version-footer").textContent = d.version; })
+      .then((d) => { document.getElementById("version-text").textContent = d.version; })
       .catch(() => {});
   </script>
 </body>

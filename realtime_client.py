@@ -55,6 +55,7 @@ class RealtimeClient:
         voice: str | None = None,
         instructions: str | None = None,
         tools: list[dict] | None = None,
+        push_to_talk: bool = False,
     ):
         headers = {
             "Authorization": f"Bearer {OPENAI_API_KEY}",
@@ -64,6 +65,25 @@ class RealtimeClient:
             additional_headers=headers,
             max_size=None,
         )
+        if push_to_talk:
+            # Leertaste steuert das Turn-Taking selbst, keine
+            # serverseitige Sprachpausenerkennung.
+            turn_detection = None
+        else:
+            # Server-seitige Sprachpausenerkennung: Mikro streamt
+            # durchgehend, kein Push-to-Talk noetig. create_response
+            # und interrupt_response bewusst aus -- wir loesen Antwort
+            # und Unterbrechung selbst explizit ueber die
+            # speech_started/speech_stopped-Events aus (Zeile unten),
+            # statt uns auf das automatische API-Verhalten zu verlassen.
+            turn_detection = {
+                "type": "server_vad",
+                "threshold": 0.55,
+                "prefix_padding_ms": 300,
+                "silence_duration_ms": 500,
+                "create_response": False,
+                "interrupt_response": False,
+            }
         session: dict = {
             "type": "realtime",
             "model": REALTIME_MODEL,
@@ -72,20 +92,7 @@ class RealtimeClient:
             "audio": {
                 "input": {
                     "format": {"type": "audio/pcm", "rate": SAMPLE_RATE},
-                    # Server-seitige Sprachpausenerkennung: Mikro streamt
-                    # durchgehend, kein Push-to-Talk noetig. create_response
-                    # und interrupt_response bewusst aus -- wir loesen Antwort
-                    # und Unterbrechung selbst explizit ueber die
-                    # speech_started/speech_stopped-Events aus (Zeile unten),
-                    # statt uns auf das automatische API-Verhalten zu verlassen.
-                    "turn_detection": {
-                        "type": "server_vad",
-                        "threshold": 0.55,
-                        "prefix_padding_ms": 300,
-                        "silence_duration_ms": 500,
-                        "create_response": False,
-                        "interrupt_response": False,
-                    },
+                    "turn_detection": turn_detection,
                     # Sprache wird bei der ersten Aeusserung automatisch
                     # erkannt (kein fester Wert -- koennte z.B. auch
                     # Franzoesisch oder Italienisch sein) und danach per
@@ -125,6 +132,13 @@ class RealtimeClient:
                 "audio": base64.b64encode(pcm_bytes).decode("ascii"),
             }
         )
+
+    async def commit(self):
+        await self._send({"type": "input_audio_buffer.commit"})
+
+    async def commit_and_respond(self):
+        await self.commit()
+        await self.create_response()
 
     async def create_response(self, instructions: str | None = None):
         event = {"type": "response.create"}
