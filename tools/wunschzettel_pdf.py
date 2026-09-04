@@ -13,7 +13,9 @@ def _split_about(about: str) -> tuple[str, str]:
     marker = "Konkrete lokale Idee:"
     idx = about.find(marker)
     wish_section = about if idx == -1 else about[:idx]
-    wish = wish_section.replace("Urspruenglicher Wunsch:", "").strip()
+    # Beide Schreibweisen abfangen (aeltere Eintraege wurden noch mit dem
+    # ASCII-Ersatz "Urspruenglicher" statt "Ursprünglicher" geschrieben).
+    wish = wish_section.replace("Ursprünglicher Wunsch:", "").replace("Urspruenglicher Wunsch:", "").strip()
     idea = "" if idx == -1 else about[idx + len(marker):].strip()
     return wish, idea
 
@@ -48,11 +50,11 @@ def build_wunschzettel_pdf(name: str, about: str, created_time: str, record_id: 
     pdf.ln(4)
     pdf.set_font("helvetica", "B", 9)
     pdf.set_text_color(*INK_SOFT)
-    pdf.cell(0, 5, "IM GESPRAECH ERFASST", align="C", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 5, "IM GESPRÄCH ERFASST", align="C", new_x="LMARGIN", new_y="NEXT")
 
     pdf.set_font("helvetica", "I", 15)
     pdf.set_text_color(*INK)
-    pdf.multi_cell(0, 8, name or "Ein Wunsch fuer hier", align="C")
+    pdf.multi_cell(0, 8, name or "Ein Wunsch für hier", align="C")
 
     pdf.ln(3)
     pdf.set_draw_color(*INK)
@@ -69,7 +71,7 @@ def build_wunschzettel_pdf(name: str, about: str, created_time: str, record_id: 
         pdf.ln(4)
         pdf.set_font("helvetica", "B", 8)
         pdf.set_text_color(*INK_SOFT)
-        pdf.cell(0, 5, "UND WAS DAS HIER VOR ORT BEDEUTEN KOENNTE", new_x="LMARGIN", new_y="NEXT")
+        pdf.cell(0, 5, "UND WAS DAS HIER VOR ORT BEDEUTEN KÖNNTE", new_x="LMARGIN", new_y="NEXT")
         pdf.ln(1)
         pdf.set_font("helvetica", "", 12)
         pdf.set_text_color(*INK)
@@ -83,7 +85,7 @@ def build_wunschzettel_pdf(name: str, about: str, created_time: str, record_id: 
     pdf.set_font("helvetica", "", 8)
     pdf.set_text_color(*INK_SOFT)
     pdf.set_xy(pdf.l_margin + 4, sketch_bottom - 8)
-    pdf.cell(0, 5, "Platz fuer eine Skizze")
+    pdf.cell(0, 5, "Platz für eine Skizze")
 
     foot_y = 272
     pdf.set_draw_color(*LINE)

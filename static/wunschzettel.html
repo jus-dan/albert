@@ -310,7 +310,7 @@
       const marker = "Konkrete lokale Idee:";
       const idx = about.indexOf(marker);
       const wishSection = idx === -1 ? about : about.slice(0, idx);
-      const wishPart = wishSection.replace("Urspruenglicher Wunsch:", "").trim();
+      const wishPart = wishSection.replace("Ursprünglicher Wunsch:", "").replace("Urspruenglicher Wunsch:", "").trim();
       const ideaPart = idx === -1 ? "" : about.slice(idx + marker.length).trim();
       return { wish: wishPart, idea: ideaPart };
     }

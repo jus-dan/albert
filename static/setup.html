@@ -137,11 +137,13 @@
     load();
   </script>
 
-  <footer id="version-footer" class="version-footer"></footer>
+  <footer id="version-footer" class="version-footer">
+    <a href="https://github.com/jus-dan/albert" target="_blank" rel="noopener" id="version-text"></a>
+  </footer>
   <script>
     fetch("/api/version")
       .then((r) => r.json())
-      .then((d) => { document.getElementById("version-footer").textContent = d.version; })
+      .then((d) => { document.getElementById("version-text").textContent = d.version; })
       .catch(() => {});
   </script>
 </body>

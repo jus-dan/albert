@@ -8,13 +8,13 @@ TOOLS = [
         "type": "function",
         "name": "submit_wish",
         "description": (
-            "Erfasst einen Zukunftswunsch zur spaeteren Pruefung durch das Team: "
-            "den urspruenglichen Wunsch der Person und, falls sie selbst eine "
+            "Erfasst einen Zukunftswunsch zur späteren Prüfung durch das Team: "
+            "den ursprünglichen Wunsch der Person und, falls sie selbst eine "
             "gefunden hat, ihre eigene konkrete lokale Idee dazu. Rufe dies erst "
             "auf, NACHDEM du der Person durch Fragen Gelegenheit gegeben hast, "
             "vom abstrakten Wunsch zu einer eigenen konkreten Idee zu kommen -- "
             "nicht schon beim ersten, noch abstrakten Wunsch. Wenn der Person "
-            "trotz Rueckfrage keine eigene Idee einfaellt, erfasse einfach nur "
+            "trotz Rückfrage keine eigene Idee einfällt, erfasse einfach nur "
             "den Wunsch, ohne local_idea."
         ),
         "parameters": {
@@ -22,18 +22,18 @@ TOOLS = [
             "properties": {
                 "title": {
                     "type": "string",
-                    "description": "Kurzer, praegnanter Titel -- der lokalen Idee, oder sonst des Wunsches selbst.",
+                    "description": "Kurzer, prägnanter Titel -- der lokalen Idee, oder sonst des Wunsches selbst.",
                 },
                 "original_wish": {
                     "type": "string",
-                    "description": "Der Wunsch, so wie die Person ihn zuerst geaeussert hat, z.B. 'Weltfrieden'.",
+                    "description": "Der Wunsch, so wie die Person ihn zuerst geäussert hat, z.B. 'Weltfrieden'.",
                 },
                 "local_idea": {
                     "type": "string",
                     "description": (
                         "Die von der Person SELBST entwickelte konkrete, lokale "
                         "Idee bzw. Handlung, die auf diesen Wunsch einzahlt. Nur "
-                        "ausfuellen, wenn die Idee wirklich von der Person kam, "
+                        "ausfüllen, wenn die Idee wirklich von der Person kam, "
                         "nicht von dir. Sonst weglassen."
                     ),
                 },
@@ -50,7 +50,7 @@ TOOLS = [
         "name": "submit_challenge",
         "description": (
             "Erfasst ein Anliegen oder eine Beobachtung, die die Person "
-            "beschaeftigt (kein Wunsch), zur spaeteren Pruefung durch das "
+            "beschäftigt (kein Wunsch), zur späteren Prüfung durch das "
             "Team -- damit sichtbar wird, was die Leute gerade umtreibt. "
             "Nutze dies, wenn die Person kein Zukunftswunsch, sondern eine "
             "Sorge, ein Problem oder eine Beobachtung teilt."
@@ -60,11 +60,11 @@ TOOLS = [
             "properties": {
                 "title": {
                     "type": "string",
-                    "description": "Kurzer, praegnanter Titel fuer das Anliegen.",
+                    "description": "Kurzer, prägnanter Titel für das Anliegen.",
                 },
                 "description": {
                     "type": "string",
-                    "description": "Was die Person beschaeftigt oder beobachtet hat, so wie sie es erzaehlt hat.",
+                    "description": "Was die Person beschäftigt oder beobachtet hat, so wie sie es erzählt hat.",
                 },
                 "contact_name": {
                     "type": "string",
@@ -84,9 +84,9 @@ async def dispatch(name: str, arguments: dict) -> str:
         local_idea = swiss_de(arguments.get("local_idea", ""))
         if not title.strip() or not original_wish.strip():
             return json.dumps(
-                {"error": "title und original_wish duerfen nicht leer sein -- bitte nochmal aufrufen."}
+                {"error": "title und original_wish dürfen nicht leer sein -- bitte nochmal aufrufen."}
             )
-        about = f"Urspruenglicher Wunsch: {original_wish}"
+        about = f"Ursprünglicher Wunsch: {original_wish}"
         if local_idea:
             about += f"\n\nKonkrete lokale Idee: {local_idea}"
         result = await airtable_client.submit_contribution(
@@ -109,7 +109,7 @@ async def dispatch(name: str, arguments: dict) -> str:
         description = swiss_de(arguments.get("description", ""))
         if not title.strip() or not description.strip():
             return json.dumps(
-                {"error": "title und description duerfen nicht leer sein -- bitte nochmal aufrufen."}
+                {"error": "title und description dürfen nicht leer sein -- bitte nochmal aufrufen."}
             )
         result = await airtable_client.submit_contribution(
             entity_type="challenge",
