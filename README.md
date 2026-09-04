@@ -132,6 +132,10 @@ Hinweis: Beide Varianten benoetigen Zugriff auf Mikrofon und Lautsprecher
 
 Wird bei jedem Tag aktualisiert.
 
+- **v1.1.9** — Versions-Menue vereinfacht: nur noch Tags zur Auswahl,
+  kein separater "main"-Eintrag mehr (main koennte theoretisch weiter
+  sein als der letzte Tag, wenn ein Merge vergessen wird zu taggen --
+  jetzt ist immer nur ein echt veroeffentlichter Stand waehlbar)
 - **v1.1.8** — Fehler beim Versionswechsel (Update/Downgrade) im
   Start-Skript sichtbar gemacht statt stillschweigend zu verwerfen
 - **v1.1.7** — Changelog eingefuehrt, damit jedes Tag eine echte

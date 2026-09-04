@@ -4,28 +4,26 @@ param(
 
 $ErrorActionPreference = "SilentlyContinue"
 
-git fetch --quiet origin 2>$null | Out-Null
-git fetch --quiet --tags origin 2>$null | Out-Null
-
-$tags = @(git tag --sort=-creatordate 2>$null)
-$branch = (git rev-parse --abbrev-ref HEAD 2>$null)
-$onMain = ($branch -eq "main")
-$currentTag = $null
-if (-not $onMain) {
-    $currentTag = (git describe --tags --exact-match 2>$null)
-}
-$currentDescribe = (git describe --tags 2>$null)
-if (-not $currentDescribe) { $currentDescribe = "unbekannt" }
-
 function Write-Result($action, $ref) {
     "$action|$ref" | Set-Content -Path $ResultFile -Encoding ascii
 }
 
-# --- Menu-Knoten aufbauen: main (rollend) zuoberst, dann Tags neueste zuerst ---
-$nodes = New-Object System.Collections.Generic.List[object]
-$nodes.Add([PSCustomObject]@{ Label = ""; Action = "MAIN"; Ref = "main"; IsCurrent = $false })
+git fetch --quiet origin 2>$null | Out-Null
+git fetch --quiet --tags origin 2>$null | Out-Null
 
-$maxTags = 6
+# Nur getaggte, veroeffentlichte Staende stehen zur Auswahl -- nie ein
+# ungetaggter Zwischenstand auf main (main koennte theoretisch weiter sein
+# als der letzte Tag, wenn ein Merge vergessen wurde zu taggen).
+$tags = @(git tag --sort=-creatordate 2>$null)
+if ($tags.Count -eq 0) {
+    Write-Result "STAY" ""
+    exit 0
+}
+
+$currentTag = (git describe --tags --exact-match 2>$null)
+
+$nodes = New-Object System.Collections.Generic.List[object]
+$maxTags = 7
 $count = 0
 foreach ($t in $tags) {
     if ($count -ge $maxTags) { break }
@@ -34,10 +32,8 @@ foreach ($t in $tags) {
 }
 
 $currentIndex = -1
-if ($onMain) {
-    $currentIndex = 0
-} elseif ($currentTag) {
-    for ($i = 1; $i -lt $nodes.Count; $i++) {
+if ($currentTag) {
+    for ($i = 0; $i -lt $nodes.Count; $i++) {
         if ($nodes[$i].Ref -eq $currentTag) { $currentIndex = $i; break }
     }
 }
@@ -47,25 +43,19 @@ if ($currentIndex -ge 0) {
     $nodes[$currentIndex].Action = "STAY"
 }
 
-# --- Labels vergeben ---
 for ($i = 0; $i -lt $nodes.Count; $i++) {
     $n = $nodes[$i]
+    $newestNote = if ($i -eq 0) { " (neueste)" } else { "" }
     if ($n.IsCurrent) {
-        if ($onMain) {
-            $n.Label = "$currentDescribe  <-- laeuft jetzt (main, folgt automatisch)"
-        } else {
-            $n.Label = "$($n.Ref)  <-- laeuft jetzt"
-        }
-    } elseif ($n.Ref -eq "main") {
-        $n.Label = "Update auf main (neueste, folgt automatisch)"
+        $n.Label = "$($n.Ref)$newestNote  <-- laeuft jetzt"
     } else {
-        $verb = if ($i -lt $currentIndex) { "Update auf" } else { "Zurueck zu" }
-        $n.Label = "$verb $($n.Ref)"
+        $verb = if ($currentIndex -lt 0 -or $i -lt $currentIndex) { "Update auf" } else { "Zurueck zu" }
+        $n.Label = "$verb $($n.Ref)$newestNote"
     }
 }
 
 if ($nodes.Count -le 1) {
-    Write-Result "STAY" $nodes[0].Ref
+    Write-Result $nodes[0].Action $nodes[0].Ref
     exit 0
 }
 
