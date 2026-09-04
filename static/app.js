@@ -95,11 +95,11 @@ function addEntryNotice(message) {
 
 function addPrintLink(recordId) {
   const link = document.createElement("a");
-  link.href = `/wunschzettel.html?id=${encodeURIComponent(recordId)}`;
+  link.href = `/api/wish/${encodeURIComponent(recordId)}/pdf`;
   link.target = "_blank";
   link.rel = "noopener";
   link.className = "print-link";
-  link.textContent = "🖨️ Wunschzettel ansehen & ausdrucken";
+  link.textContent = "🖨️ Wunschzettel als PDF ansehen & ausdrucken";
   chatLog.appendChild(link);
   chatLog.scrollTop = chatLog.scrollHeight;
 }

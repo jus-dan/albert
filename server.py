@@ -5,13 +5,14 @@ import logging
 import subprocess
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, Response, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 
 from personas import GREETING_INSTRUCTIONS, PERSONAS
 from realtime_client import RealtimeClient
 from tools import airtable_client, events
 from tools.definitions import TOOLS, dispatch as dispatch_tool
+from tools.wunschzettel_pdf import build_wunschzettel_pdf
 
 LOG_FILE = Path(__file__).resolve().parent / "data" / "albert.log"
 LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
@@ -81,6 +82,26 @@ async def api_wish(record_id: str):
         "name": fields.get("name", ""),
         "about": fields.get("about", ""),
     }
+
+
+@app.get("/api/wish/{record_id}/pdf")
+async def api_wish_pdf(record_id: str):
+    try:
+        record = await airtable_client.get_record("_input_pipeline", record_id)
+    except Exception:
+        raise HTTPException(status_code=404, detail="Wunsch nicht gefunden.")
+    fields = record.get("fields", {})
+    pdf_bytes = build_wunschzettel_pdf(
+        name=fields.get("name", ""),
+        about=fields.get("about", ""),
+        created_time=record.get("createdTime", ""),
+        record_id=record.get("id", record_id),
+    )
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'inline; filename="wunschzettel-{record_id}.pdf"'},
+    )
 
 
 @app.websocket("/ws/{persona_id}")
