@@ -234,6 +234,8 @@ async def albert_socket(websocket: WebSocket, persona_id: str):
         asyncio.create_task(websocket.send_text(json.dumps({"type": "assistant_start"})))
 
     def send_user_transcript(transcript: str):
+        nonlocal awaiting_reply_before_print
+        awaiting_reply_before_print = False
         asyncio.create_task(
             websocket.send_text(json.dumps({"type": "user_message", "text": swiss_de(transcript)}))
         )
@@ -247,14 +249,29 @@ async def albert_socket(websocket: WebSocket, persona_id: str):
     }
 
     last_wish_record_id = None
+    awaiting_reply_before_print = False
 
     async def handle_tool_call(name: str, arguments: dict) -> str:
-        nonlocal last_wish_record_id
+        nonlocal last_wish_record_id, awaiting_reply_before_print
         logger.info("Tool-Aufruf: %s(%s)", name, arguments)
 
         if name == "confirm_print":
             if not last_wish_record_id:
                 return json.dumps({"error": "Kein Wunsch zum Ausdrucken vorhanden."})
+            if awaiting_reply_before_print:
+                logger.warning(
+                    "confirm_print blockiert: Druckfrage wurde noch nicht gestellt/beantwortet (Record %s)",
+                    last_wish_record_id,
+                )
+                return json.dumps(
+                    {
+                        "error": (
+                            "Noch nicht erlaubt -- frag zuerst per Sprache, ob die Person "
+                            "drucken moechte, und rufe confirm_print erst auf, nachdem sie "
+                            "darauf geantwortet hat."
+                        )
+                    }
+                )
             try:
                 await _print_record(last_wish_record_id)
             except Exception:
@@ -276,6 +293,7 @@ async def albert_socket(websocket: WebSocket, persona_id: str):
             if parsed.get("status") == "ok":
                 if name == "submit_wish":
                     last_wish_record_id = parsed.get("record_id")
+                    awaiting_reply_before_print = printing_on
                 display_name = arguments.get("name") or arguments.get("title", "")
                 entity_type = ENTRY_ENTITY_TYPE.get(name, "")
                 await websocket.send_text(

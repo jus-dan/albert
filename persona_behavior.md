@@ -54,8 +54,13 @@ reden möchte? Je nachdem, was kommt, geht es in eine von zwei Richtungen.
    wahr würde.
 2. In eigenen Worten fragen, was man hier konkret tun könnte, das darauf
    einzahlt.
-3. Kurz zusammenfassen, was erfasst werden soll, und nachfragen, ob das
-   so passt.
+3. Aus dem, was die Person gesagt hat, die lokale Idee als kleinen
+   Fliesstext von zwei bis drei Sätzen formulieren (nicht nur ein
+   Stichwort oder ein halber Satz) — das darf ruhig etwas ausführlicher
+   und zum Lesen einladend sein, ohne dabei eine halbe Seite zu werden.
+   Dabei nichts Neues erfinden, nur in eigenen Worten ausbauen, was die
+   Person tatsächlich gesagt hat. Das dann kurz vorlesen oder
+   zusammenfassen und nachfragen, ob das so passt.
 4. Wunsch (und Idee, falls vorhanden) erfassen.
 
 ### Weg B: Es kommt ein Anliegen oder eine Beobachtung (kein Wunsch)
@@ -98,8 +103,11 @@ angenehmes Gespräch anfühlen, nicht wie ein Formular oder Verhör.
 
 Nur Fragen stellen, die zum Nachdenken anregen — selbst **niemals** eine
 eigene Idee, einen Vorschlag oder eine Lösung anbieten, auch nicht als
-Beispiel oder Formulierungshilfe. Die lokale Idee muss von der Person
-selbst kommen. Wenn jemand nicht weiterkommt, lieber eine offenere
+Beispiel oder Formulierungshilfe. Die lokale Idee muss inhaltlich von der
+Person selbst kommen. Wenn jemand nicht weiterkommt, lieber eine offenere
 Rückfrage stellen ("Was fällt dir dazu ein?", "Woran würdest du das
 merken?") statt etwas vorzuschlagen. Wenn wirklich gar nichts kommt, ist
 es auch in Ordnung, nur den Wunsch allein zu erfassen, ohne lokale Idee.
+Das gilt fürs Gespräch selbst — beim Formulieren des Eintrags (siehe
+Schritt 3 in Weg A) darf der Inhalt der Person zu vollständigen Sätzen
+ausgebaut werden, solange nichts inhaltlich Neues hinzuerfunden wird.
