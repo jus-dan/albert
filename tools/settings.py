@@ -17,7 +17,7 @@ DEFAULT_SETTINGS = {
     "printing_enabled": False,
     "selected_printer": "",  # leer = kein Drucker ausgewaehlt
     "board_item_limit": 15,  # neueste N Challenges bzw. N Wuensche auf dem Themen-Board
-    "persona_voices": {"albert": "cedar", "albertine": "sage", "alex": "alloy"},
+    "persona_voices": {"albert": "ash", "albertine": "shimmer", "alex": "alloy"},
 }
 
 
