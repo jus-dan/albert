@@ -60,7 +60,7 @@ def print_wunschzettel_directly(
 
     from tools.text_utils import format_timestamp, split_about, swiss_de
 
-    wish, idea = (swiss_de(part) for part in split_about(about or ""))
+    wish, why, idea = (swiss_de(part) for part in split_about(about or ""))
     wish = wish or swiss_de(name) or "etwas, das hier vor Ort besser wird"
     timestamp = format_timestamp(created_time)
 
@@ -114,6 +114,16 @@ def print_wunschzettel_directly(
 
     hline(y)
     y += 8
+
+    if why:
+        hdc.SelectObject(win32ui.CreateFont({"name": "Arial", "height": pt(10), "weight": 700}))
+        hdc.TextOut(left_px, mm_y(y), "Warum?")
+        y += 7
+        hdc.SelectObject(win32ui.CreateFont({"name": "Arial", "height": pt(12)}))
+        for line in _wrap_by_width(hdc, why, max_text_width_px):
+            hdc.TextOut(left_px, mm_y(y), line)
+            y += 7
+        y += 3
 
     if idea:
         hdc.SelectObject(win32ui.CreateFont({"name": "Arial", "height": pt(10), "weight": 700}))

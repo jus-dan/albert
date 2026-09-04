@@ -6,7 +6,7 @@ INK = (0, 0, 0)
 
 
 def build_wunschzettel_pdf(name: str, about: str, created_time: str, record_id: str) -> bytes:
-    wish, idea = (swiss_de(part) for part in split_about(about or ""))
+    wish, why, idea = (swiss_de(part) for part in split_about(about or ""))
     wish = wish or swiss_de(name) or "etwas, das hier vor Ort besser wird"
 
     pdf = FPDF(unit="mm", format="A4")
@@ -28,6 +28,14 @@ def build_wunschzettel_pdf(name: str, about: str, created_time: str, record_id: 
     y = pdf.get_y()
     pdf.line(pdf.l_margin, y, pdf.w - pdf.r_margin, y)
     pdf.ln(8)
+
+    if why:
+        pdf.set_font("helvetica", "B", 10)
+        pdf.cell(0, 6, "Warum?", new_x="LMARGIN", new_y="NEXT")
+        pdf.ln(1)
+        pdf.set_font("helvetica", "", 12)
+        pdf.multi_cell(0, 7, why)
+        pdf.ln(3)
 
     if idea:
         pdf.set_font("helvetica", "B", 10)

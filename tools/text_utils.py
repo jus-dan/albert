@@ -11,15 +11,22 @@ def swiss_de(text: str) -> str:
     return text.replace("ß", "ss") if text else text
 
 
-def split_about(about: str) -> tuple[str, str]:
-    marker = "Konkrete lokale Idee:"
-    idx = about.find(marker)
-    wish_section = about if idx == -1 else about[:idx]
+def split_about(about: str) -> tuple[str, str, str]:
+    idea_marker = "Konkrete lokale Idee:"
+    why_marker = "Warum:"
+
+    idea_idx = about.find(idea_marker)
+    before_idea = about if idea_idx == -1 else about[:idea_idx]
+    idea = "" if idea_idx == -1 else about[idea_idx + len(idea_marker):].strip()
+
+    why_idx = before_idea.find(why_marker)
+    wish_section = before_idea if why_idx == -1 else before_idea[:why_idx]
+    why = "" if why_idx == -1 else before_idea[why_idx + len(why_marker):].strip()
+
     # Beide Schreibweisen abfangen (aeltere Eintraege wurden noch mit dem
     # ASCII-Ersatz "Urspruenglicher" statt "Ursprünglicher" geschrieben).
     wish = wish_section.replace("Ursprünglicher Wunsch:", "").replace("Urspruenglicher Wunsch:", "").strip()
-    idea = "" if idx == -1 else about[idx + len(marker):].strip()
-    return wish, idea
+    return wish, why, idea
 
 
 def format_timestamp(iso: str) -> str:

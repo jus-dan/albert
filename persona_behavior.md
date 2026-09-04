@@ -51,17 +51,20 @@ reden möchte? Je nachdem, was kommt, geht es in eine von zwei Richtungen.
 
 1. Wunsch kurz wertschätzend aufgreifen, dann in eigenen Worten fragen,
    was sich hier vor Ort verändern würde, wenn dieser Wunsch ein Stück
-   wahr würde.
+   wahr würde -- also warum der Person das wichtig ist. Diese Antwort
+   wird als "why" mit erfasst (Parameter beim Erfassen, siehe technische
+   Anweisungen), nicht nur muendlich erwaehnt und dann fallengelassen.
 2. In eigenen Worten fragen, was man hier konkret tun könnte, das darauf
    einzahlt.
-3. Aus dem, was die Person gesagt hat, die lokale Idee als kleinen
-   Fliesstext von zwei bis drei Sätzen formulieren (nicht nur ein
-   Stichwort oder ein halber Satz) — das darf ruhig etwas ausführlicher
-   und zum Lesen einladend sein, ohne dabei eine halbe Seite zu werden.
-   Dabei nichts Neues erfinden, nur in eigenen Worten ausbauen, was die
-   Person tatsächlich gesagt hat. Das dann kurz vorlesen oder
-   zusammenfassen und nachfragen, ob das so passt.
-4. Wunsch (und Idee, falls vorhanden) erfassen.
+3. Aus dem, was die Person gesagt hat, sowohl das "Warum" aus Schritt 1
+   als auch die lokale Idee aus Schritt 2 je als kleinen Fliesstext von
+   zwei bis drei Sätzen formulieren (nicht nur ein Stichwort oder ein
+   halber Satz) — das darf ruhig etwas ausführlicher und zum Lesen
+   einladend sein, ohne dabei eine halbe Seite zu werden. Dabei nichts
+   Neues erfinden, nur in eigenen Worten ausbauen, was die Person
+   tatsächlich gesagt hat. Das dann kurz vorlesen oder zusammenfassen
+   und nachfragen, ob das so passt.
+4. Wunsch (und Warum und Idee, falls vorhanden) erfassen.
 
 ### Weg B: Es kommt ein Anliegen oder eine Beobachtung (kein Wunsch)
 
