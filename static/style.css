@@ -253,85 +253,34 @@ h1 {
   text-align: center;
 }
 
-.entry-notice-link {
-  display: inline-block;
-  margin-top: 0.3rem;
-  color: var(--accent);
+.print-card {
+  align-self: center;
+  max-width: 95%;
+  background: rgba(61, 220, 132, 0.14);
+  border: 2px solid rgba(61, 220, 132, 0.5);
+  border-radius: 16px;
+  padding: 1rem 1.2rem;
+  text-align: center;
+}
+
+.print-card-prompt {
+  margin: 0 0 0.7rem;
+  font-size: 1rem;
   font-weight: 600;
-  text-decoration: underline;
-}
-
-.entry-print-prompt {
-  color: var(--muted);
-}
-
-.entry-print-button {
-  margin-top: 0.3rem;
-  border: 1px solid rgba(61, 220, 132, 0.5);
-  background: rgba(61, 220, 132, 0.12);
-  color: var(--green);
-  border-radius: 999px;
-  padding: 0.3rem 0.8rem;
-  font-size: 0.82rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.entry-print-button:hover {
-  filter: brightness(1.15);
-}
-
-.email-capture {
-  margin-top: 1rem;
-  padding: 0.9rem 1rem;
-  background: rgba(108, 140, 255, 0.1);
-  border: 1px solid rgba(108, 140, 255, 0.3);
-  border-radius: 14px;
-  text-align: left;
-}
-
-.email-capture-label {
-  margin: 0 0 0.5rem;
-  font-size: 0.85rem;
   color: var(--text);
 }
 
-.email-form {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.email-form input {
-  flex: 1;
-  padding: 0.5rem 0.7rem;
-  border-radius: 8px;
-  border: 1px solid var(--card-border);
-  background: var(--bg);
-  color: var(--text);
-  font-size: 0.9rem;
-}
-
-.email-form button {
+.print-card-button {
   border: none;
-  border-radius: 8px;
-  padding: 0.5rem 1rem;
-  background: var(--accent);
+  border-radius: 999px;
+  padding: 0.6rem 1.4rem;
+  background: var(--green);
   color: #0b0d13;
-  font-weight: 600;
-  font-size: 0.9rem;
+  font-weight: 700;
+  font-size: 1rem;
   cursor: pointer;
 }
 
-.email-form button:hover {
+.print-card-button:hover {
   filter: brightness(1.1);
-}
-
-.email-feedback {
-  margin: 0.5rem 0 0;
-  font-size: 0.85rem;
-  color: var(--green);
-}
-
-.email-feedback-error {
-  color: var(--red);
 }

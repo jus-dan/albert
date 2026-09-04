@@ -39,15 +39,12 @@ TOOL_MECHANICS = (
     "Bevor du 'submit_challenge' oder 'submit_wish' aufrufst, fasse kurz "
     "zusammen, was du festhalten willst, und frag nach, ob das so passt. "
     "Erfasste Eintraege werden zur Pruefung durch das Team gesammelt, "
-    "erscheinen also nicht sofort live irgendwo. Nach jeder Erfassung "
-    "erscheint auf dem Bildschirm automatisch ein Feld, wo die Person "
-    "freiwillig ihre E-Mail-Adresse eintippen kann, um auf dem Laufenden "
-    "zu bleiben und spaeter einen Ausdruck zu bekommen -- du darfst kurz "
-    "darauf hinweisen, aber versuche NIEMALS, die E-Mail-Adresse selbst "
-    "per Sprache aufzunehmen oder zu diktieren -- das ist unzuverlaessig. "
-    "Genauso erscheint automatisch die Moeglichkeit, die Idee auszudrucken "
-    "und ans Board zu haengen -- du darfst das kurz erwaehnen, musst dafuer "
-    "aber kein Tool aufrufen."
+    "erscheinen also nicht sofort live irgendwo. Direkt NACHDEM 'submit_wish' "
+    "oder 'submit_challenge' erfolgreich war, erscheint auf dem Bildschirm "
+    "automatisch ein Ausdrucken-Knopf -- weise die Person IMMER sofort "
+    "darauf hin, dass sie die Idee jetzt ausdrucken und ans Board haengen "
+    "kann, BEVOR du irgendetwas anderes fragst oder sagst. Dafuer musst du "
+    "kein Tool aufrufen, das passiert automatisch auf dem Bildschirm."
 )
 
 SAFETY_GUIDANCE = (

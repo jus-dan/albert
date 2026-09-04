@@ -11,10 +11,6 @@ const micWarning = document.getElementById("mic-warning");
 const micIndicator = document.getElementById("mic-indicator");
 const chatLog = document.getElementById("chat-log");
 const backButton = document.getElementById("back-button");
-const emailCapture = document.getElementById("email-capture");
-const emailForm = document.getElementById("email-form");
-const emailInput = document.getElementById("email-input");
-const emailFeedback = document.getElementById("email-feedback");
 
 let currentPersonaId = null;
 let socket = null;
@@ -30,7 +26,6 @@ let activeSources = [];
 let pendingUserBubbles = [];
 let currentAssistantBubble = null;
 let currentReveal = null;
-let emailTargetRecordId = null;
 
 const REVEAL_CHARS_PER_SEC = 24;
 
@@ -92,34 +87,31 @@ function addEntryNotice(message) {
   const notice = document.createElement("div");
   notice.className = "entry-notice";
   const typeLabel = ENTITY_TYPE_LABELS[message.entity_type] || message.entity_type;
-  notice.textContent = `Neuer Eintrag erfasst: "${message.name}" (${typeLabel}) — Tabelle ${message.table}, ID ${message.record_id}`;
+  notice.textContent = `Neuer Eintrag erfasst: "${message.name}" (${typeLabel})`;
+  chatLog.appendChild(notice);
 
   if (message.record_id) {
-    notice.appendChild(document.createElement("br"));
-    const printPrompt = document.createElement("span");
-    printPrompt.className = "entry-print-prompt";
-    printPrompt.textContent = "Möchtest du deine Idee ausdrucken und ans Board hängen? ";
-    notice.appendChild(printPrompt);
+    const printCard = document.createElement("div");
+    printCard.className = "print-card";
+
+    const printPrompt = document.createElement("p");
+    printPrompt.className = "print-card-prompt";
+    printPrompt.textContent = "Möchtest du deine Idee ausdrucken und ans Board hängen?";
+    printCard.appendChild(printPrompt);
 
     const printButton = document.createElement("button");
     printButton.type = "button";
-    printButton.className = "entry-print-button";
-    printButton.textContent = "🖨️ Ausdrucken";
+    printButton.className = "print-card-button";
+    printButton.textContent = "🖨️ Jetzt ausdrucken";
     printButton.addEventListener("click", () => {
       window.open(`/wunschzettel.html?id=${encodeURIComponent(message.record_id)}`, "_blank", "noopener");
     });
-    notice.appendChild(printButton);
+    printCard.appendChild(printButton);
+
+    chatLog.appendChild(printCard);
   }
 
-  chatLog.appendChild(notice);
   chatLog.scrollTop = chatLog.scrollHeight;
-
-  if (message.record_id) {
-    emailTargetRecordId = message.record_id;
-    emailCapture.hidden = false;
-    emailFeedback.hidden = true;
-    emailInput.value = "";
-  }
 }
 
 function floatTo16BitPCM(float32Array) {
@@ -296,9 +288,6 @@ async function startSession() {
   currentAssistantBubble = null;
   currentReveal = null;
   pendingUserBubbles = [];
-  emailTargetRecordId = null;
-  emailCapture.hidden = true;
-  emailFeedback.hidden = true;
 
   connectSocket(currentPersonaId);
   setupMic();
@@ -333,9 +322,6 @@ function selectPersona(personaId) {
   chatLog.innerHTML = "";
   micWarning.hidden = true;
   micIndicator.hidden = true;
-  emailCapture.hidden = true;
-  emailFeedback.hidden = true;
-  emailTargetRecordId = null;
   setStatus("inactive", "Inaktiv");
 }
 
@@ -356,33 +342,6 @@ backButton.addEventListener("click", () => {
   currentPersonaId = null;
   conversation.hidden = true;
   personaSelect.hidden = false;
-});
-
-emailForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  if (!emailTargetRecordId) return;
-  const email = emailInput.value.trim();
-  if (!email) return;
-
-  try {
-    const resp = await fetch(`/api/entry/${encodeURIComponent(emailTargetRecordId)}/email`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
-    });
-    emailFeedback.hidden = false;
-    if (resp.ok) {
-      emailFeedback.textContent = "Danke, gespeichert!";
-      emailFeedback.classList.remove("email-feedback-error");
-    } else {
-      emailFeedback.textContent = "Konnte nicht gespeichert werden.";
-      emailFeedback.classList.add("email-feedback-error");
-    }
-  } catch (err) {
-    emailFeedback.hidden = false;
-    emailFeedback.textContent = "Konnte nicht gespeichert werden (Netzwerkfehler).";
-    emailFeedback.classList.add("email-feedback-error");
-  }
 });
 
 document.addEventListener("keydown", (event) => {

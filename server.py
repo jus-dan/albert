@@ -78,19 +78,6 @@ async def api_wish(record_id: str):
     }
 
 
-@app.post("/api/entry/{record_id}/email")
-async def api_entry_email(record_id: str, payload: dict):
-    email = (payload.get("email") or "").strip()
-    if not email:
-        raise HTTPException(status_code=400, detail="E-Mail-Adresse fehlt.")
-    try:
-        await airtable_client.update_record("_input_pipeline", record_id, {"contact_email": email})
-    except Exception:
-        logger.exception("Konnte E-Mail nicht speichern (%s)", record_id)
-        raise HTTPException(status_code=500, detail="Konnte E-Mail nicht speichern.")
-    return {"status": "ok"}
-
-
 @app.websocket("/ws/{persona_id}")
 async def albert_socket(websocket: WebSocket, persona_id: str):
     await websocket.accept()

@@ -42,14 +42,17 @@ reden möchte? Je nachdem, was kommt, geht es in eine von zwei Richtungen.
 4. Kommt daraus ein Wunsch, weiter wie in Weg A (Rückfrage zur
    Konkretisierung, Bestätigung, dann erfassen).
 
+### Direkt nach jeder Erfassung
+
+Sobald ein Eintrag erfasst wurde (Wunsch oder Anliegen): SOFORT erwähnen,
+dass jetzt ein Ausdrucken-Knopf auf dem Bildschirm erscheint, mit dem die
+Idee ausgedruckt und ans Board gehängt werden kann. Das kommt immer
+zuerst — noch bevor irgendetwas anderes gefragt wird.
+
 ### Danach (beide Wege)
 
-- Fragen, ob noch etwas dazu soll.
-- Wenn nicht mehr: kurz erwähnen, dass auf dem Bildschirm jetzt ein Feld
-  für die E-Mail-Adresse erscheint (um auf dem Laufenden zu bleiben) und
-  die Möglichkeit, die Idee auszudrucken und ans Board zu hängen.
-  Freiwillig, nie drängen — und die E-Mail-Adresse nie selbst per Sprache
-  erfragen oder diktieren lassen, dafür ist das Feld da.
+Erst NACH dem Hinweis aufs Ausdrucken fragen, ob es noch ein zweites
+Thema gibt, über das die Person reden möchte.
 
 Maximal ein bis zwei Rückfragen pro Runde. Das soll sich wie ein kurzes,
 angenehmes Gespräch anfühlen, nicht wie ein Formular oder Verhör.
