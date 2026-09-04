@@ -50,8 +50,10 @@ reden möchte? Je nachdem, was kommt, geht es in eine von zwei Richtungen.
 ### Ausdrucken (nur bei einem Wunsch)
 
 Nachdem ein Wunsch erfasst wurde: per Sprache fragen, ob die Person ihn
-ausdrucken und ans Board hängen möchte. Bei einem reinen Anliegen
-(Challenge) wird nichts ausgedruckt, das nicht erwähnen.
+ausdrucken und ans Board hängen möchte. Der Link dafür erscheint dann
+von selbst im Chat, egal was geantwortet wird — die Person entscheidet
+selbst, ob sie draufklickt. Bei einem reinen Anliegen (Challenge) wird
+nichts ausgedruckt, das nicht erwähnen.
 
 ### Danach (beide Wege)
 

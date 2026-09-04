@@ -13,7 +13,13 @@ from realtime_client import RealtimeClient
 from tools import airtable_client, events
 from tools.definitions import TOOLS, dispatch as dispatch_tool
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+LOG_FILE = Path(__file__).resolve().parent / "data" / "albert.log"
+LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[logging.StreamHandler(), logging.FileHandler(LOG_FILE, encoding="utf-8")],
+)
 logger = logging.getLogger("albert.web")
 
 app = FastAPI()
@@ -106,19 +112,8 @@ async def albert_socket(websocket: WebSocket, persona_id: str):
         "submit_challenge": "challenge",
     }
 
-    last_wish_record_id = None
-
     async def handle_tool_call(name: str, arguments: dict) -> str:
-        nonlocal last_wish_record_id
         logger.info("Tool-Aufruf: %s(%s)", name, arguments)
-
-        if name == "confirm_print":
-            if not last_wish_record_id:
-                return json.dumps({"error": "Kein Wunsch zum Ausdrucken vorhanden."})
-            await websocket.send_text(
-                json.dumps({"type": "print_link", "record_id": last_wish_record_id})
-            )
-            return json.dumps({"status": "ok"})
 
         result = await dispatch_tool(name, arguments)
 
@@ -128,8 +123,6 @@ async def albert_socket(websocket: WebSocket, persona_id: str):
             except json.JSONDecodeError:
                 parsed = {}
             if parsed.get("status") == "ok":
-                if name == "submit_wish":
-                    last_wish_record_id = parsed.get("record_id")
                 display_name = arguments.get("name") or arguments.get("title", "")
                 entity_type = ENTRY_ENTITY_TYPE.get(name, "")
                 await websocket.send_text(
@@ -143,6 +136,10 @@ async def albert_socket(websocket: WebSocket, persona_id: str):
                         }
                     )
                 )
+                if name == "submit_wish":
+                    await websocket.send_text(
+                        json.dumps({"type": "print_link", "record_id": parsed.get("record_id")})
+                    )
 
         return result
 

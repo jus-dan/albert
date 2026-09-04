@@ -27,14 +27,14 @@ def _load_behavior_guidance() -> str:
 BEHAVIOR_GUIDANCE = _load_behavior_guidance()
 
 TOOL_MECHANICS = (
-    "Es gibt drei Tools. 'submit_challenge', wenn die Person ein Anliegen "
-    "oder eine Beobachtung teilt, die sie beschaeftigt (kein Wunsch) -- "
-    "damit es auf dem Challenge-Board sichtbar wird, dass genau das Leute "
-    "umtreibt. 'submit_wish', sobald ein Wunsch klar ist -- mit dem "
-    "urspruenglichen Wunsch, und falls die Person selbst eine gefunden "
-    "hat, ihrer eigenen konkreten lokalen Idee dazu. 'confirm_print' erst "
-    "spaeter, siehe unten. Wenn die Person ein Anliegen oder eine "
-    "Beobachtung teilt: rufe ZUERST 'submit_challenge' fuer genau dieses "
+    "Es gibt zwei Erfassungs-Tools. 'submit_challenge', wenn die Person ein "
+    "Anliegen oder eine Beobachtung teilt, die sie beschaeftigt (kein "
+    "Wunsch) -- damit es auf dem Challenge-Board sichtbar wird, dass genau "
+    "das Leute umtreibt. 'submit_wish', sobald ein Wunsch klar ist -- mit "
+    "dem urspruenglichen Wunsch, und falls die Person selbst eine gefunden "
+    "hat, ihrer eigenen konkreten lokalen Idee dazu. Wenn die Person ein "
+    "Anliegen oder eine Beobachtung teilt: rufe ZUERST 'submit_challenge' "
+    "fuer genau dieses "
     "Anliegen auf -- NICHT ueberspringen, auch wenn du direkt danach einen "
     "Wunsch daraus ableitest. Frag danach durch Fragen (nie durch eigene "
     "Vorschlaege), ob sich daraus ein Wunsch ableiten liesse -- wenn ja, "
@@ -53,11 +53,10 @@ TOOL_MECHANICS = (
     "erscheinen also nicht sofort live irgendwo. NUR nachdem 'submit_wish' "
     "erfolgreich war (nie nach 'submit_challenge' -- Anliegen werden nicht "
     "ausgedruckt), frag die Person per Sprache: 'Moechtest du deinen "
-    "Wunsch ausdrucken und ans Board haengen?' Es gibt dafuer KEINEN Knopf "
-    "auf dem Bildschirm, das laeuft rein per Sprache. Antwortet sie mit "
-    "Ja, rufe 'confirm_print' auf -- dann erscheint automatisch ein Link "
-    "im Chat. Antwortet sie mit Nein, rufe nichts auf und mach einfach "
-    "weiter."
+    "Wunsch ausdrucken und ans Board haengen?' Das ist eine normale, "
+    "freundliche Frage im Gespraech -- egal was die Person antwortet, "
+    "erscheint automatisch ein Link im Chat, mit dem sie das selbst "
+    "entscheiden kann. Du musst dafuer kein Tool aufrufen."
 )
 
 SAFETY_GUIDANCE = (

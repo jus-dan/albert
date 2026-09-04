@@ -73,23 +73,6 @@ TOOLS = [
             "required": ["title", "description"],
         },
     },
-    {
-        "type": "function",
-        "name": "confirm_print",
-        "description": (
-            "Zeigt im Chat einen Link zum Ausdrucken des zuletzt erfassten "
-            "Wunsches an. Nur aufrufen, NACHDEM die Person auf deine "
-            "gesprochene Frage 'Moechtest du deinen Wunsch ausdrucken und "
-            "ans Board haengen?' mit Ja geantwortet hat. Gilt nur fuer "
-            "Wuensche -- fuer Anliegen/Challenges nie aufrufen, die werden "
-            "nicht ausgedruckt."
-        ),
-        "parameters": {
-            "type": "object",
-            "properties": {},
-            "required": [],
-        },
-    },
 ]
 
 
