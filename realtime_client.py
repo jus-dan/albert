@@ -32,6 +32,7 @@ class RealtimeClient:
         self._on_speech_started = on_speech_started
         self._ws = None
         self._recv_task = None
+        self._response_active = False
 
     async def connect(
         self,
@@ -56,16 +57,18 @@ class RealtimeClient:
                 "input": {
                     "format": {"type": "audio/pcm", "rate": SAMPLE_RATE},
                     # Server-seitige Sprachpausenerkennung: Mikro streamt
-                    # durchgehend, kein Push-to-Talk noetig. interrupt_response
-                    # sorgt dafuer, dass eine laufende Antwort automatisch
-                    # abgebrochen wird, sobald die Person zu sprechen beginnt.
+                    # durchgehend, kein Push-to-Talk noetig. create_response
+                    # und interrupt_response bewusst aus -- wir loesen Antwort
+                    # und Unterbrechung selbst explizit ueber die
+                    # speech_started/speech_stopped-Events aus (Zeile unten),
+                    # statt uns auf das automatische API-Verhalten zu verlassen.
                     "turn_detection": {
                         "type": "server_vad",
-                        "threshold": 0.5,
+                        "threshold": 0.4,
                         "prefix_padding_ms": 300,
                         "silence_duration_ms": 500,
-                        "create_response": True,
-                        "interrupt_response": True,
+                        "create_response": False,
+                        "interrupt_response": False,
                     },
                     "transcription": {"model": "gpt-4o-mini-transcribe"},
                 },
@@ -107,6 +110,9 @@ class RealtimeClient:
             event["response"] = {"instructions": instructions}
         await self._send(event)
 
+    async def cancel_response(self):
+        await self._send({"type": "response.cancel"})
+
     async def _handle_tool_call(self, event: dict):
         call_id = event.get("call_id")
         name = event.get("name", "")
@@ -147,8 +153,12 @@ class RealtimeClient:
                     await self._on_audio_delta(audio_bytes)
                 elif event_type == "response.output_audio_transcript.delta" and self._on_transcript_delta:
                     self._on_transcript_delta(event.get("delta", ""))
-                elif event_type == "response.created" and self._on_response_start:
-                    self._on_response_start()
+                elif event_type == "response.created":
+                    self._response_active = True
+                    if self._on_response_start:
+                        self._on_response_start()
+                elif event_type == "response.done":
+                    self._response_active = False
                 elif (
                     event_type == "conversation.item.input_audio_transcription.completed"
                     and self._on_user_transcript
@@ -156,8 +166,15 @@ class RealtimeClient:
                     self._on_user_transcript(event.get("transcript", ""))
                 elif event_type == "response.function_call_arguments.done":
                     await self._handle_tool_call(event)
-                elif event_type == "input_audio_buffer.speech_started" and self._on_speech_started:
-                    self._on_speech_started()
+                elif event_type == "input_audio_buffer.speech_started":
+                    logger.info("VAD: Sprache erkannt")
+                    if self._on_speech_started:
+                        self._on_speech_started()
+                    if self._response_active:
+                        await self.cancel_response()
+                elif event_type == "input_audio_buffer.speech_stopped":
+                    logger.info("VAD: Sprachende erkannt, erzeuge Antwort")
+                    await self.create_response()
                 elif event_type == "error":
                     logger.error("Realtime-API-Fehler: %s", event.get("error"))
                 elif event_type in ("session.created", "session.updated"):
