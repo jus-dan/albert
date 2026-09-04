@@ -141,14 +141,14 @@ PERSONAS: dict[str, Persona] = {
         "albert",
         "Albert",
         "männlich",
-        "cedar",
+        "ash",
         style_note="Sprich warm und ruhig.",
     ),
     "albertine": Persona(
         "albertine",
         "Albertine",
         "weiblich",
-        "sage",
+        "shimmer",
         style_note="Sprich warm und freundlich.",
     ),
     "alex": Persona(
