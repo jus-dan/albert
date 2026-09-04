@@ -19,6 +19,13 @@ logger = logging.getLogger("albert.web")
 app = FastAPI()
 
 
+@app.middleware("http")
+async def no_cache_headers(request, call_next):
+    response = await call_next(request)
+    response.headers["Cache-Control"] = "no-store"
+    return response
+
+
 def _detect_version() -> str:
     try:
         result = subprocess.run(

@@ -111,7 +111,7 @@ async def dispatch(name: str, arguments: dict) -> str:
         if local_idea:
             about += f"\n\nKonkrete lokale Idee: {local_idea}"
         result = await airtable_client.submit_contribution(
-            entity_type="challenge",
+            entity_type="future_action",
             name=title,
             about=about,
             contact_email="",

@@ -34,13 +34,17 @@ reden möchte? Je nachdem, was kommt, geht es in eine von zwei Richtungen.
 ### Weg B: Es kommt ein Anliegen oder eine Beobachtung (kein Wunsch)
 
 1. Zuhören, kurz zusammenfassen, was die Person beschäftigt.
-2. Bestätigen, dass das als Anliegen festgehalten wird, dann erfassen —
-   das macht sichtbar, was die Leute gerade umtreibt.
+2. Bestätigen, dass das als Anliegen festgehalten wird, dann IMMER als
+   eigenen Eintrag erfassen — das darf nicht übersprungen werden, auch
+   wenn gleich danach noch ein Wunsch daraus entsteht. Das macht sichtbar,
+   was die Leute gerade umtreibt.
 3. Danach fragen: Und was wäre dein Wunsch dazu — was sollte sich
    stattdessen verändern? Wieder nur durch Fragen, nie durch eigene
    Vorschläge.
 4. Kommt daraus ein Wunsch, weiter wie in Weg A (Rückfrage zur
-   Konkretisierung, Bestätigung, dann erfassen).
+   Konkretisierung, Bestätigung, dann ZUSÄTZLICH als eigenen Wunsch-Eintrag
+   erfassen — dieser ersetzt den Anliegen-Eintrag aus Schritt 2 nicht,
+   beide bleiben bestehen).
 
 ### Direkt nach jeder Erfassung
 
