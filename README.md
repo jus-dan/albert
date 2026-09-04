@@ -132,6 +132,10 @@ Hinweis: Beide Varianten benoetigen Zugriff auf Mikrofon und Lautsprecher
 
 Wird bei jedem Tag aktualisiert.
 
+- **v1.2.1** — Toten Code entfernt (`static/wunschzettel.html`);
+  Entwicklungs-Branches (alles ausser `main`) ueberspringen die
+  Versionsauswahl komplett, statt bei jedem Testlauf auf einen Tag zu
+  wechseln
 - **v1.2.0** — Versions-Menue vereinfacht: nur noch Tags zur Auswahl,
   kein separater "main"-Eintrag mehr (main koennte theoretisch weiter
   sein als der letzte Tag, wenn ein Merge vergessen wird zu taggen --
