@@ -20,34 +20,45 @@ if exist ".git" (
         )
         echo.
     ) else (
-        set "VERSION_RESULT_FILE=%TEMP%\albert_version_choice_%RANDOM%.txt"
-        if exist "!VERSION_RESULT_FILE!" del "!VERSION_RESULT_FILE!" >nul 2>nul
+        set "GIT_BRANCH="
+        for /f "delims=" %%b in ('git rev-parse --abbrev-ref HEAD 2^>nul') do set "GIT_BRANCH=%%b"
+        set "DEV_BRANCH=0"
+        if not "!GIT_BRANCH!"=="main" if not "!GIT_BRANCH!"=="HEAD" set "DEV_BRANCH=1"
 
-        where powershell >nul 2>nul
-        if not errorlevel 1 (
-            powershell -NoProfile -ExecutionPolicy Bypass -File "select-version.ps1" -ResultFile "!VERSION_RESULT_FILE!"
-        )
+        if "!DEV_BRANCH!"=="1" (
+            echo Entwicklungs-Branch '!GIT_BRANCH!' erkannt -- Versionsauswahl wird
+            echo uebersprungen, es startet der aktuelle Stand ohne Checkout/Pull.
+            echo.
+        ) else (
+            set "VERSION_RESULT_FILE=%TEMP%\albert_version_choice_%RANDOM%.txt"
+            if exist "!VERSION_RESULT_FILE!" del "!VERSION_RESULT_FILE!" >nul 2>nul
 
-        set "VERSION_ACTION=STAY"
-        set "VERSION_REF="
-        if exist "!VERSION_RESULT_FILE!" (
-            for /f "usebackq tokens=1,2 delims=|" %%a in ("!VERSION_RESULT_FILE!") do (
-                set "VERSION_ACTION=%%a"
-                set "VERSION_REF=%%b"
+            where powershell >nul 2>nul
+            if not errorlevel 1 (
+                powershell -NoProfile -ExecutionPolicy Bypass -File "select-version.ps1" -ResultFile "!VERSION_RESULT_FILE!"
             )
-            del "!VERSION_RESULT_FILE!" >nul 2>nul
-        )
 
-        if "!VERSION_ACTION!"=="CHECKOUT" (
-            echo Wechsle zu Version !VERSION_REF! ...
-            git checkout !VERSION_REF! --quiet
-            if errorlevel 1 (
-                echo FEHLER beim Wechsel zu !VERSION_REF! ^(siehe Meldung oben^) -- verwende
-                echo den vorhandenen Stand.
-                pause
+            set "VERSION_ACTION=STAY"
+            set "VERSION_REF="
+            if exist "!VERSION_RESULT_FILE!" (
+                for /f "usebackq tokens=1,2 delims=|" %%a in ("!VERSION_RESULT_FILE!") do (
+                    set "VERSION_ACTION=%%a"
+                    set "VERSION_REF=%%b"
+                )
+                del "!VERSION_RESULT_FILE!" >nul 2>nul
             )
+
+            if "!VERSION_ACTION!"=="CHECKOUT" (
+                echo Wechsle zu Version !VERSION_REF! ...
+                git checkout !VERSION_REF! --quiet
+                if errorlevel 1 (
+                    echo FEHLER beim Wechsel zu !VERSION_REF! ^(siehe Meldung oben^) -- verwende
+                    echo den vorhandenen Stand.
+                    pause
+                )
+            )
+            echo.
         )
-        echo.
     )
 )
 
