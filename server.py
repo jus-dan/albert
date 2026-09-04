@@ -172,6 +172,9 @@ async def albert_socket(websocket: WebSocket, persona_id: str):
     await websocket.send_text(json.dumps({"type": "status", "status": "ready", "persona": persona.name}))
     await client.create_response(instructions=GREETING_INSTRUCTIONS)
 
+    audio_chunk_count = 0
+    audio_byte_total = 0
+
     try:
         while True:
             raw = await websocket.receive_text()
@@ -179,7 +182,16 @@ async def albert_socket(websocket: WebSocket, persona_id: str):
             msg_type = message.get("type")
 
             if msg_type == "audio_chunk":
-                await client.append_audio(base64.b64decode(message["audio"]))
+                pcm_bytes = base64.b64decode(message["audio"])
+                await client.append_audio(pcm_bytes)
+                audio_chunk_count += 1
+                audio_byte_total += len(pcm_bytes)
+                if audio_chunk_count % 50 == 0:
+                    logger.info(
+                        "Audio-Stream: %d Chunks empfangen, %d Bytes insgesamt",
+                        audio_chunk_count,
+                        audio_byte_total,
+                    )
     except WebSocketDisconnect:
         logger.info("Browser-Verbindung getrennt (%s)", persona.name)
     except Exception:
