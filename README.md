@@ -12,10 +12,10 @@ zusätzlich direkt ausdrucken und ans Board hängen.
 
 Einfach **`Albert-starten.bat`** doppelklicken. Das Skript:
 - prüft, ob Python installiert ist (sonst kurzer Hinweis mit Download-Link)
-- fragt, welche Version laufen soll (Pfeiltasten + Enter) — Standard ist
-  "Bleiben" auf der neuesten Version, läuft nach 5 Sekunden ohne Eingabe
-  automatisch damit weiter; alternativ lässt sich auch eine ältere Version
-  (Tag) auswählen, z.B. um ein Update zu testen oder zurückzurollen
+- fragt, welche Version laufen soll (Pfeiltasten + Enter) — die aktuell
+  laufende Version ist in der Liste markiert und vorausgewählt, läuft nach
+  10 Sekunden ohne Eingabe automatisch damit weiter; alternativ lässt sich
+  explizit eine andere Version (Update oder Downgrade auf ein Tag) wählen
 - legt beim ersten Mal automatisch eine virtuelle Umgebung an
 - installiert/aktualisiert alle benötigten Python-Pakete automatisch
 - fragt beim allerersten Start nach den Zugangsdaten (`.env`, öffnet sich
@@ -127,3 +127,24 @@ belegen Mikrofon/Lautsprecher).
 
 Hinweis: Beide Varianten benoetigen Zugriff auf Mikrofon und Lautsprecher
 (ueber `sounddevice`/PortAudio bzw. die Browser-Audio-APIs).
+
+## Changelog
+
+Wird bei jedem Tag aktualisiert.
+
+- **v1.1.6** — README auf aktuellen Stand gebracht, Versions-Menue beim
+  Start ueberarbeitet (laufende Version in der Liste markiert,
+  10s-Fortschrittsbalken statt 5s-Countdown)
+- **v1.1.5** — Footer-Links nicht mehr unterstrichen
+- **v1.1.4** — Versionsauswahl-Menue beim Start (Pfeiltasten, "Bleiben"
+  als Standard)
+- **v1.1.3** — Standard-Stimmen auf Ash/Shimmer/Alloy gesetzt
+- **v1.1.2** — Stimmen pro Person waehlbar, mit Vorhoer-Button in den
+  Einstellungen; Themen-Board-Link in den Footer verschoben
+- **v1.1.1** — Druck-Flow gehaertet (Druckfrage wird nicht mehr
+  uebersprungen), Wunschzettel-Layout an PDF-Vorschau angeglichen
+- **v1.1.0** — Wunschmaschine: Zukunftswuensche und Anliegen per Sprache
+  sammeln (Wunsch-Trichter), echtes Drucken, Einstellungsseite,
+  live-synchronisiertes Themen-Board
+- **v1.0.0** — Erste Version: Albert Sprachassistent mit
+  Airtable-Anbindung, Themen-Board und Ein-Klick-Launcher
