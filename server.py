@@ -11,7 +11,7 @@ from fastapi.staticfiles import StaticFiles
 from personas import PERSONAS, greeting_instructions
 from realtime_client import RealtimeClient
 from tools import airtable_client
-from tools.definitions import TOOLS, dispatch as dispatch_tool
+from tools.definitions import CONFIRM_PRINT_TOOL, TOOLS, dispatch as dispatch_tool
 from tools.printing import list_printers, print_pdf_bytes
 from tools.settings import load_settings, printing_active, save_settings
 from tools.text_utils import swiss_de
@@ -160,14 +160,21 @@ async def api_wish_pdf(record_id: str):
     )
 
 
-@app.post("/api/wish/{record_id}/print")
-async def api_wish_print(record_id: str):
+async def _print_record(record_id: str) -> None:
+    """Wirft eine Exception bei jedem Fehler (kein Drucker, Druckfehler etc.)."""
     settings = load_settings()
     if not printing_active(settings):
-        raise HTTPException(status_code=400, detail="Drucken ist nicht aktiviert.")
+        raise RuntimeError("Drucken ist nicht aktiviert.")
     pdf_bytes = await _build_pdf_for_record(record_id)
+    print_pdf_bytes(pdf_bytes, settings["selected_printer"])
+
+
+@app.post("/api/wish/{record_id}/print")
+async def api_wish_print(record_id: str):
     try:
-        print_pdf_bytes(pdf_bytes, settings["selected_printer"])
+        await _print_record(record_id)
+    except HTTPException:
+        raise
     except Exception:
         logger.exception("Drucken fehlgeschlagen (%s)", record_id)
         raise HTTPException(status_code=500, detail="Drucken fehlgeschlagen.")
@@ -214,8 +221,25 @@ async def albert_socket(websocket: WebSocket, persona_id: str):
         "submit_challenge": "challenge",
     }
 
+    last_wish_record_id = None
+
     async def handle_tool_call(name: str, arguments: dict) -> str:
+        nonlocal last_wish_record_id
         logger.info("Tool-Aufruf: %s(%s)", name, arguments)
+
+        if name == "confirm_print":
+            if not last_wish_record_id:
+                return json.dumps({"error": "Kein Wunsch zum Ausdrucken vorhanden."})
+            try:
+                await _print_record(last_wish_record_id)
+            except Exception:
+                logger.exception("Drucken fehlgeschlagen (%s)", last_wish_record_id)
+                await websocket.send_text(
+                    json.dumps({"type": "print_status", "status": "error"})
+                )
+                return json.dumps({"error": "Drucken fehlgeschlagen."})
+            await websocket.send_text(json.dumps({"type": "print_status", "status": "ok"}))
+            return json.dumps({"status": "ok"})
 
         result = await dispatch_tool(name, arguments)
 
@@ -225,6 +249,8 @@ async def albert_socket(websocket: WebSocket, persona_id: str):
             except json.JSONDecodeError:
                 parsed = {}
             if parsed.get("status") == "ok":
+                if name == "submit_wish":
+                    last_wish_record_id = parsed.get("record_id")
                 display_name = arguments.get("name") or arguments.get("title", "")
                 entity_type = ENTRY_ENTITY_TYPE.get(name, "")
                 await websocket.send_text(
@@ -254,11 +280,13 @@ async def albert_socket(websocket: WebSocket, persona_id: str):
         on_speech_started=send_speech_started,
     )
 
+    session_tools = TOOLS + [CONFIRM_PRINT_TOOL] if printing_on else TOOLS
+
     try:
         await client.connect(
             voice=persona.voice,
             instructions=persona.system_instructions(printing_enabled=printing_on),
-            tools=TOOLS,
+            tools=session_tools,
             push_to_talk=push_to_talk,
         )
     except Exception:

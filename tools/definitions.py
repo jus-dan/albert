@@ -76,6 +76,23 @@ TOOLS = [
     },
 ]
 
+CONFIRM_PRINT_TOOL = {
+    "type": "function",
+    "name": "confirm_print",
+    "description": (
+        "Loest den echten Druckauftrag fuer den zuletzt erfassten Wunsch "
+        "aus. Rufe dies SOFORT auf, sobald die Person auf deine Frage "
+        "'Moechtest du deinen Wunsch ausdrucken?' mit Ja antwortet -- das "
+        "ist die Aktion selbst, nicht nur eine Ankuendigung. Bei Nein "
+        "nicht aufrufen."
+    ),
+    "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+    },
+}
+
 
 async def dispatch(name: str, arguments: dict) -> str:
     if name == "submit_wish":

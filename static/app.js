@@ -97,6 +97,14 @@ function addEntryNotice(message) {
   chatLog.scrollTop = chatLog.scrollHeight;
 }
 
+function addPrintStatusNotice(status) {
+  const notice = document.createElement("div");
+  notice.className = "entry-notice";
+  notice.textContent = status === "ok" ? "🖨️ Wird gedruckt …" : "⚠️ Drucken fehlgeschlagen";
+  chatLog.appendChild(notice);
+  chatLog.scrollTop = chatLog.scrollHeight;
+}
+
 function addPrintLink(recordId) {
   const wrap = document.createElement("div");
   wrap.className = "print-actions";
@@ -231,6 +239,8 @@ function connectSocket(personaId) {
       addEntryNotice(message);
     } else if (message.type === "print_link") {
       addPrintLink(message.record_id);
+    } else if (message.type === "print_status") {
+      addPrintStatusNotice(message.status);
     } else if (message.type === "user_speaking") {
       stopPlaybackForBargeIn();
       pendingUserBubbles.push(addMessage("user", "…"));

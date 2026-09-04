@@ -69,10 +69,15 @@ PRINTING_ENABLED_TEXT = (
     "Person per Sprache, ob sie den Wunsch ausdrucken und ans Board "
     "hängen möchte -- und sag dabei in eigenen Worten auch kurz wozu: "
     "damit andere Besucher den Wunsch sehen und sich davon inspirieren "
-    "lassen können, nicht nur die nackte Ja/Nein-Frage. Das ist eine "
-    "normale, freundliche Frage im Gespräch -- egal was die Person "
-    "antwortet, erscheint automatisch ein Link im Chat, mit dem sie das "
-    "selbst entscheiden kann. Du musst dafür kein Tool aufrufen."
+    "lassen können, nicht nur die nackte Ja/Nein-Frage. Antwortet die "
+    "Person mit Ja, rufe SOFORT 'confirm_print' auf -- das loest den "
+    "echten Druckauftrag aus, das ist keine Ankündigung, sondern die "
+    "Aktion selbst. Sag NIE nur, dass es einen Link zum Klicken gibt, "
+    "wenn die Person Ja gesagt hat -- das reicht ihr nicht, sie will "
+    "dass gedruckt wird. Antwortet sie mit Nein, rufe nichts auf. "
+    "Unabhängig davon erscheint automatisch auch ein Link im Chat als "
+    "Rückfalloption, falls sie später nochmal drucken möchte -- das "
+    "musst du nicht erwähnen."
 )
 
 PRINTING_DISABLED_TEXT = (
