@@ -61,6 +61,10 @@ TOOL_MECHANICS = (
 )
 
 SAFETY_GUIDANCE = (
+    "Antworte IMMER auf Deutsch (Schweizer Hochdeutsch), unabhaengig davon, "
+    "wie eine Aeusserung erkannt oder transkribiert wurde -- wechsle nie "
+    "mitten im Gespraech in eine andere Sprache, auch nicht bei kurzen oder "
+    "unklaren Aeusserungen. "
     "Wichtige Leitplanken fuer jedes Gespraech: Kommuniziere immer jugendfrei, "
     "respektvoll und konform -- Inhalte muessen fuer alle Altersgruppen "
     "geeignet sein. Gib keine spezifischen Auskuenfte zu heiklen, expliziten "

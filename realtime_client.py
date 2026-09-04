@@ -17,6 +17,11 @@ REALTIME_URL = f"wss://api.openai.com/v1/realtime?model={REALTIME_MODEL}"
 # trotzdem durchkommt.
 MIN_SPEECH_DURATION_S = 0.35
 
+# Laenger als das muss jemand sprechen, damit es Albert WAEHREND er selbst
+# spricht unterbricht -- ein kurzes Raeuspern soll ihn nicht mitten im Satz
+# abwuergen. Absichtlich deutlich laenger als MIN_SPEECH_DURATION_S.
+BARGE_IN_CONFIRM_DELAY_S = 2.5
+
 
 class RealtimeClient:
     """Thin wrapper around the OpenAI Realtime WebSocket API."""
@@ -77,7 +82,10 @@ class RealtimeClient:
                         "create_response": False,
                         "interrupt_response": False,
                     },
-                    "transcription": {"model": "gpt-4o-mini-transcribe"},
+                    # Sprache fest auf Deutsch gepinnt, damit die Erkennung
+                    # bei kurzen/unklaren Aeusserungen nicht in eine andere
+                    # Sprache (z.B. Chinesisch) abdriftet.
+                    "transcription": {"model": "gpt-4o-mini-transcribe", "language": "de"},
                 },
                 "output": {
                     "format": {"type": "audio/pcm", "rate": SAMPLE_RATE},
@@ -121,12 +129,12 @@ class RealtimeClient:
         await self._send({"type": "response.cancel"})
 
     async def _confirm_barge_in(self, started_at: float):
-        # Kurz abwarten, bevor die laufende Antwort wirklich unterbrochen
-        # wird -- ein kurzes Geraeusch (Husten, Rascheln) soll Albert nicht
-        # mitten im Satz abwuergen. Nur wenn die Sprachphase, die diesen
-        # Aufruf ausgeloest hat, noch dieselbe ist (kein speech_stopped
-        # dazwischen), gilt es als echte Unterbrechung.
-        await asyncio.sleep(MIN_SPEECH_DURATION_S)
+        # Deutlich laenger abwarten, bevor die laufende Antwort wirklich
+        # unterbrochen wird -- ein Raeuspern oder kurzes Geraeusch soll
+        # Albert nicht mitten im Satz abwuergen. Nur wenn die Sprachphase,
+        # die diesen Aufruf ausgeloest hat, noch dieselbe ist (kein
+        # speech_stopped dazwischen), gilt es als echte Unterbrechung.
+        await asyncio.sleep(BARGE_IN_CONFIRM_DELAY_S)
         if self._speech_started_at != started_at:
             return
         if self._on_speech_started:
