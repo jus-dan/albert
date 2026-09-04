@@ -1,42 +1,15 @@
-from datetime import datetime
-
 from fpdf import FPDF
 
-from tools.text_utils import swiss_de
+from tools.text_utils import format_timestamp, split_about, swiss_de
 
 INK = (28, 28, 28)
 INK_SOFT = (107, 107, 107)
 LINE = (217, 215, 210)
 
 
-def _split_about(about: str) -> tuple[str, str]:
-    marker = "Konkrete lokale Idee:"
-    idx = about.find(marker)
-    wish_section = about if idx == -1 else about[:idx]
-    # Beide Schreibweisen abfangen (aeltere Eintraege wurden noch mit dem
-    # ASCII-Ersatz "Urspruenglicher" statt "Ursprünglicher" geschrieben).
-    wish = wish_section.replace("Ursprünglicher Wunsch:", "").replace("Urspruenglicher Wunsch:", "").strip()
-    idea = "" if idx == -1 else about[idx + len(marker):].strip()
-    return wish, idea
-
-
-MONTHS_DE = [
-    "Januar", "Februar", "März", "April", "Mai", "Juni",
-    "Juli", "August", "September", "Oktober", "November", "Dezember",
-]
-
-
-def _format_timestamp(iso: str) -> str:
-    try:
-        dt = datetime.fromisoformat(iso.replace("Z", "+00:00"))
-        return f"{dt.day}. {MONTHS_DE[dt.month - 1]} {dt.year} · {dt.hour:02d}:{dt.minute:02d} Uhr"
-    except Exception:
-        return ""
-
-
 def build_wunschzettel_pdf(name: str, about: str, created_time: str, record_id: str) -> bytes:
     name = swiss_de(name)
-    wish, idea = (swiss_de(part) for part in _split_about(about or ""))
+    wish, idea = (swiss_de(part) for part in split_about(about or ""))
 
     pdf = FPDF(unit="mm", format="A4")
     pdf.set_auto_page_break(False)
@@ -93,7 +66,7 @@ def build_wunschzettel_pdf(name: str, about: str, created_time: str, record_id: 
     pdf.set_xy(pdf.l_margin, foot_y + 2)
     pdf.set_font("helvetica", "", 8)
     pdf.set_text_color(*INK_SOFT)
-    pdf.cell(0, 5, _format_timestamp(created_time))
+    pdf.cell(0, 5, format_timestamp(created_time))
     pdf.set_xy(pdf.l_margin, foot_y + 2)
     pdf.set_font("helvetica", "B", 8)
     pdf.set_text_color(*INK)

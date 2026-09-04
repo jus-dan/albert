@@ -12,7 +12,7 @@ from personas import PERSONAS, greeting_instructions
 from realtime_client import RealtimeClient
 from tools import airtable_client
 from tools.definitions import CONFIRM_PRINT_TOOL, TOOLS, dispatch as dispatch_tool
-from tools.printing import list_printers, print_pdf_bytes
+from tools.printing import list_printers, print_test_page, print_wunschzettel_directly
 from tools.settings import load_settings, printing_active, save_settings
 from tools.text_utils import swiss_de
 from tools.wunschzettel_pdf import build_wunschzettel_pdf
@@ -100,6 +100,19 @@ async def api_printers():
     return {"printers": list_printers()}
 
 
+@app.post("/api/print-test")
+async def api_print_test(payload: dict):
+    printer_name = payload.get("printer_name") or ""
+    if not printer_name or printer_name not in list_printers():
+        raise HTTPException(status_code=400, detail="Kein gueltiger Drucker ausgewaehlt.")
+    try:
+        print_test_page(printer_name)
+    except Exception:
+        logger.exception("Testseite fehlgeschlagen (%s)", printer_name)
+        raise HTTPException(status_code=500, detail="Testseite konnte nicht gedruckt werden.")
+    return {"status": "ok"}
+
+
 @app.get("/api/board")
 async def api_board():
     limit = load_settings().get("board_item_limit", 15)
@@ -161,12 +174,24 @@ async def api_wish_pdf(record_id: str):
 
 
 async def _print_record(record_id: str) -> None:
-    """Wirft eine Exception bei jedem Fehler (kein Drucker, Druckfehler etc.)."""
+    """Wirft eine Exception bei jedem Fehler (kein Drucker, Druckfehler etc.).
+    Druckt direkt per GDI, nicht ueber eine PDF-Datei -- keine externe
+    Anwendung wird dafuer geoeffnet."""
     settings = load_settings()
     if not printing_active(settings):
         raise RuntimeError("Drucken ist nicht aktiviert.")
-    pdf_bytes = await _build_pdf_for_record(record_id)
-    print_pdf_bytes(pdf_bytes, settings["selected_printer"])
+    try:
+        record = await airtable_client.get_record("_input_pipeline", record_id)
+    except Exception:
+        raise HTTPException(status_code=404, detail="Wunsch nicht gefunden.")
+    fields = record.get("fields", {})
+    print_wunschzettel_directly(
+        printer_name=settings["selected_printer"],
+        name=fields.get("name", ""),
+        about=fields.get("about", ""),
+        created_time=record.get("createdTime", ""),
+        record_id=record.get("id", record_id),
+    )
 
 
 @app.post("/api/wish/{record_id}/print")
