@@ -60,6 +60,7 @@ h1 {
 
 .version-footer a {
   color: var(--muted);
+  text-decoration: none;
 }
 
 .version-footer a:hover {
