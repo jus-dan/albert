@@ -24,6 +24,7 @@ let micReady = false;
 let isActive = false;
 let isRecording = false;
 let interactionMode = "vad";
+let showDebugInfo = false;
 let playhead = 0;
 let activeSources = [];
 let pendingUserBubbles = [];
@@ -236,8 +237,10 @@ async function setupMic() {
   silentGain.gain.value = 0;
 
   sentChunkCount = 0;
-  audioDebug.hidden = false;
-  audioDebug.textContent = "Audio-Chunks gesendet: 0";
+  if (showDebugInfo) {
+    audioDebug.hidden = false;
+    audioDebug.textContent = "Audio-Chunks gesendet: 0";
+  }
 
   micProcessor.onaudioprocess = (event) => {
     if (!isActive || !socket || socket.readyState !== WebSocket.OPEN) return;
@@ -246,7 +249,9 @@ async function setupMic() {
     const pcm16 = floatTo16BitPCM(input);
     socket.send(JSON.stringify({ type: "audio_chunk", audio: arrayBufferToBase64(pcm16.buffer) }));
     sentChunkCount += 1;
-    audioDebug.textContent = `Audio-Chunks gesendet: ${sentChunkCount}`;
+    if (showDebugInfo) {
+      audioDebug.textContent = `Audio-Chunks gesendet: ${sentChunkCount}`;
+    }
   };
 
   micSource.connect(micProcessor);
@@ -348,6 +353,7 @@ async function loadSettings() {
     const resp = await fetch("/api/settings");
     const data = await resp.json();
     interactionMode = data.interaction_mode || "vad";
+    showDebugInfo = !!data.show_debug_info;
     const enabled = data.enabled_personas || ["albert", "albertine", "alex"];
     document.querySelectorAll(".persona-card").forEach((btn) => {
       btn.hidden = !enabled.includes(btn.dataset.persona);

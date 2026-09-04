@@ -72,7 +72,12 @@ async def api_set_settings(payload: dict):
         raise HTTPException(status_code=400, detail="Ungueltige Personen-Auswahl.")
     if mode not in ("vad", "push_to_talk"):
         raise HTTPException(status_code=400, detail="Ungueltiger Modus.")
-    settings = {"enabled_personas": enabled, "interaction_mode": mode}
+    show_debug_info = bool(payload.get("show_debug_info", False))
+    settings = {
+        "enabled_personas": enabled,
+        "interaction_mode": mode,
+        "show_debug_info": show_debug_info,
+    }
     save_settings(settings)
     return settings
 

@@ -71,6 +71,14 @@
       </label>
     </fieldset>
 
+    <fieldset>
+      <legend>Diagnose</legend>
+      <label class="option">
+        <input type="checkbox" id="debug-checkbox" />
+        Debug-Informationen im Gespräch anzeigen (z.B. Audio-Chunk-Zähler)
+      </label>
+    </fieldset>
+
     <button id="save-button" type="button">Speichern</button>
     <p id="feedback" hidden></p>
   </main>
@@ -78,6 +86,7 @@
   <script>
     const PERSONA_BOXES = document.querySelectorAll('input[name="persona"]');
     const MODE_RADIOS = document.querySelectorAll('input[name="mode"]');
+    const debugCheckbox = document.getElementById("debug-checkbox");
     const saveButton = document.getElementById("save-button");
     const feedback = document.getElementById("feedback");
 
@@ -92,6 +101,7 @@
         MODE_RADIOS.forEach((radio) => {
           radio.checked = radio.value === (data.interaction_mode || "vad");
         });
+        debugCheckbox.checked = !!data.show_debug_info;
       } catch (err) {
         feedback.hidden = false;
         feedback.textContent = "Einstellungen konnten nicht geladen werden.";
@@ -111,11 +121,13 @@
         return;
       }
 
+      const show_debug_info = debugCheckbox.checked;
+
       try {
         const resp = await fetch("/api/settings", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ enabled_personas, interaction_mode }),
+          body: JSON.stringify({ enabled_personas, interaction_mode, show_debug_info }),
         });
         feedback.hidden = false;
         if (resp.ok) {

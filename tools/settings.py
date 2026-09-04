@@ -6,6 +6,7 @@ SETTINGS_FILE = Path(__file__).resolve().parent.parent / "data" / "settings.json
 DEFAULT_SETTINGS = {
     "enabled_personas": ["albert", "albertine", "alex"],
     "interaction_mode": "vad",  # "vad" (freihaendig) oder "push_to_talk" (Leertaste)
+    "show_debug_info": False,  # z.B. Audio-Chunk-Zaehler im Gespraech
 }
 
 
