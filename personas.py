@@ -2,9 +2,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 GREETING = (
-    "Hallo, da bin ich. Wenn du mit mir reden willst, halte die Leertaste "
-    "gedrueckt, solange du sprichst, und lass sie los, wenn du von mir eine "
-    "Antwort haben moechtest."
+    "Hallo, da bin ich. Du kannst einfach drauflos reden, ich hoere dir zu."
 )
 
 GREETING_INSTRUCTIONS = (

@@ -107,6 +107,9 @@ async def albert_socket(websocket: WebSocket, persona_id: str):
     def send_user_transcript(transcript: str):
         asyncio.create_task(websocket.send_text(json.dumps({"type": "user_message", "text": transcript})))
 
+    def send_speech_started():
+        asyncio.create_task(websocket.send_text(json.dumps({"type": "user_speaking"})))
+
     ENTRY_ENTITY_TYPE = {
         "submit_wish": "future_wish",
         "submit_challenge": "challenge",
@@ -149,6 +152,7 @@ async def albert_socket(websocket: WebSocket, persona_id: str):
         on_response_start=send_response_start,
         on_user_transcript=send_user_transcript,
         on_tool_call=handle_tool_call,
+        on_speech_started=send_speech_started,
     )
 
     try:
@@ -176,10 +180,6 @@ async def albert_socket(websocket: WebSocket, persona_id: str):
 
             if msg_type == "audio_chunk":
                 await client.append_audio(base64.b64decode(message["audio"]))
-            elif msg_type == "commit":
-                await client.commit_and_respond()
-            elif msg_type == "interrupt":
-                await client.cancel_response()
     except WebSocketDisconnect:
         logger.info("Browser-Verbindung getrennt (%s)", persona.name)
     except Exception:

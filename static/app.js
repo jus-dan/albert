@@ -19,7 +19,6 @@ let micStream = null;
 let micSource = null;
 let micProcessor = null;
 let micReady = false;
-let isRecording = false;
 let isActive = false;
 let playhead = 0;
 let activeSources = [];
@@ -161,13 +160,10 @@ function stopAllAudio() {
   activeSources = [];
 }
 
-function interruptPlayback() {
+function stopPlaybackForBargeIn() {
   stopAllAudio();
   if (audioContext) {
     playhead = audioContext.currentTime;
-  }
-  if (socket && socket.readyState === WebSocket.OPEN) {
-    socket.send(JSON.stringify({ type: "interrupt" }));
   }
 }
 
@@ -202,6 +198,9 @@ function connectSocket(personaId) {
       addEntryNotice(message);
     } else if (message.type === "print_link") {
       addPrintLink(message.record_id);
+    } else if (message.type === "user_speaking") {
+      stopPlaybackForBargeIn();
+      pendingUserBubbles.push(addMessage("user", "…"));
     } else if (message.type === "error") {
       setStatus("error", message.message || "Fehler");
     }
@@ -218,7 +217,9 @@ function connectSocket(personaId) {
 
 async function setupMic() {
   try {
-    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    micStream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+    });
   } catch (err) {
     micWarning.hidden = false;
     return;
@@ -230,7 +231,7 @@ async function setupMic() {
   silentGain.gain.value = 0;
 
   micProcessor.onaudioprocess = (event) => {
-    if (!isRecording || !socket || socket.readyState !== WebSocket.OPEN) return;
+    if (!isActive || !socket || socket.readyState !== WebSocket.OPEN) return;
     const input = event.inputBuffer.getChannelData(0);
     const pcm16 = floatTo16BitPCM(input);
     socket.send(JSON.stringify({ type: "audio_chunk", audio: arrayBufferToBase64(pcm16.buffer) }));
@@ -240,10 +241,10 @@ async function setupMic() {
   micProcessor.connect(silentGain);
   silentGain.connect(audioContext.destination);
   micReady = true;
+  micIndicator.hidden = false;
 }
 
 function stopMicCapture() {
-  isRecording = false;
   micReady = false;
   if (micProcessor) {
     micProcessor.disconnect();
@@ -333,25 +334,4 @@ backButton.addEventListener("click", () => {
   currentPersonaId = null;
   conversation.hidden = true;
   personaSelect.hidden = false;
-});
-
-document.addEventListener("keydown", (event) => {
-  if (event.code !== "Space" || conversation.hidden || event.repeat) return;
-  event.preventDefault();
-  if (!isActive || !micReady || isRecording) return;
-  isRecording = true;
-  micIndicator.hidden = false;
-  interruptPlayback();
-});
-
-document.addEventListener("keyup", (event) => {
-  if (event.code !== "Space" || conversation.hidden) return;
-  event.preventDefault();
-  if (!isRecording) return;
-  isRecording = false;
-  micIndicator.hidden = true;
-  if (socket && socket.readyState === WebSocket.OPEN) {
-    socket.send(JSON.stringify({ type: "commit" }));
-    pendingUserBubbles.push(addMessage("user", "…"));
-  }
 });

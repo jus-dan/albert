@@ -1,10 +1,10 @@
 # Albert
 
 Ein lokaler Sprach-KI-Assistent mit drei wählbaren Personas (Albert, Albertine,
-Alex). Läuft als kleine Weboberfläche: Persona auswählen, Start drücken,
-Leertaste halten zum Sprechen. Kann per Sprache im regionalen Ökosystem
-(Airtable) nachschlagen, was es an Initiativen/Organisationen/Personen gibt,
-und neue Beiträge erfassen.
+Alex) — die "Wunschmaschine". Läuft als kleine Weboberfläche: Persona
+auswählen, Start drücken, einfach drauflos reden (kein Knopf zum Sprechen
+nötig, Albert hört durchgehend zu). Sammelt Zukunftswünsche und Anliegen von
+Besuchern und erfasst sie zur Prüfung durch das Team in Airtable.
 
 ## Schnellstart (empfohlen)
 
@@ -49,7 +49,8 @@ bereits installiert sein, den Rest erledigt das Skript.
 
 1. Persona auswählen (Albert / Albertine / Alex)
 2. "Start" drücken — die Person verbindet sich und begrüßt dich
-3. Leertaste gedrückt halten, um zu sprechen; loslassen für die Antwort
+3. Einfach drauflos reden — kein Knopf nötig, Albert hört durchgehend zu
+   und erkennt selbst, wann jemand spricht (Server-VAD)
 4. "Stop" beendet die Verbindung wieder, der Chatverlauf bleibt sichtbar
 5. Beim ersten Start fragt der Browser nach Mikrofonzugriff — ohne Freigabe
    funktioniert nur die Sprachausgabe, nicht die Spracheingabe
@@ -64,11 +65,12 @@ Der Status-Badge oben zeigt jederzeit, ob die Verbindung aktiv ist.
 
 ## Airtable-Anbindung
 
-Albert kann per Function-Calling auf eine Airtable-Basis zugreifen:
-- **Nachschlagen** (`list_entities`): Initiativen, Organisationen, Personen
-- **Neu erfassen** (`submit_contribution`): Organisation, Person, Initiative,
-  Challenge oder Event — landet zur Prüfung durch das Team in der Tabelle
-  `_input_pipeline`, erscheint also nicht sofort live in der Datenbank
+Albert erfasst per Function-Calling zwei Arten von Einträgen in der Tabelle
+`_input_pipeline` (zur Prüfung durch das Team, erscheint also nicht sofort
+live in der Datenbank):
+- **`submit_wish`**: ein Zukunftswunsch, inkl. selbst entwickelter lokaler Idee
+- **`submit_challenge`**: ein Anliegen oder eine Beobachtung, die jemanden
+  beschäftigt
 
 Alle drei Personas haben feste Leitplanken (jugendfrei, kein Bezug zu
 politischen/religiösen Themen) in ihren Instruktionen (`personas.py`).

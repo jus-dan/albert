@@ -22,12 +22,14 @@ class RealtimeClient:
         on_response_start=None,
         on_user_transcript=None,
         on_tool_call=None,
+        on_speech_started=None,
     ):
         self._on_audio_delta = on_audio_delta
         self._on_transcript_delta = on_transcript_delta
         self._on_response_start = on_response_start
         self._on_user_transcript = on_user_transcript
         self._on_tool_call = on_tool_call
+        self._on_speech_started = on_speech_started
         self._ws = None
         self._recv_task = None
 
@@ -53,9 +55,18 @@ class RealtimeClient:
             "audio": {
                 "input": {
                     "format": {"type": "audio/pcm", "rate": SAMPLE_RATE},
-                    # Push-to-talk steuert das Turn-Taking selbst,
-                    # daher keine serverseitige Voice-Activity-Detection.
-                    "turn_detection": None,
+                    # Server-seitige Sprachpausenerkennung: Mikro streamt
+                    # durchgehend, kein Push-to-Talk noetig. interrupt_response
+                    # sorgt dafuer, dass eine laufende Antwort automatisch
+                    # abgebrochen wird, sobald die Person zu sprechen beginnt.
+                    "turn_detection": {
+                        "type": "server_vad",
+                        "threshold": 0.5,
+                        "prefix_padding_ms": 300,
+                        "silence_duration_ms": 500,
+                        "create_response": True,
+                        "interrupt_response": True,
+                    },
                     "transcription": {"model": "gpt-4o-mini-transcribe"},
                 },
                 "output": {
@@ -90,21 +101,11 @@ class RealtimeClient:
             }
         )
 
-    async def commit(self):
-        await self._send({"type": "input_audio_buffer.commit"})
-
-    async def cancel_response(self):
-        await self._send({"type": "response.cancel"})
-
     async def create_response(self, instructions: str | None = None):
         event = {"type": "response.create"}
         if instructions:
             event["response"] = {"instructions": instructions}
         await self._send(event)
-
-    async def commit_and_respond(self):
-        await self.commit()
-        await self.create_response()
 
     async def _handle_tool_call(self, event: dict):
         call_id = event.get("call_id")
@@ -155,6 +156,8 @@ class RealtimeClient:
                     self._on_user_transcript(event.get("transcript", ""))
                 elif event_type == "response.function_call_arguments.done":
                     await self._handle_tool_call(event)
+                elif event_type == "input_audio_buffer.speech_started" and self._on_speech_started:
+                    self._on_speech_started()
                 elif event_type == "error":
                     logger.error("Realtime-API-Fehler: %s", event.get("error"))
                 elif event_type in ("session.created", "session.updated"):
