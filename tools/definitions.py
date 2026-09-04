@@ -28,6 +28,15 @@ TOOLS = [
                     "type": "string",
                     "description": "Der Wunsch, so wie die Person ihn zuerst geäussert hat, z.B. 'Weltfrieden'.",
                 },
+                "why": {
+                    "type": "string",
+                    "description": (
+                        "Was sich hier vor Ort veraendern wuerde bzw. warum der "
+                        "Person dieser Wunsch wichtig ist -- ihre Antwort auf die "
+                        "erste Rueckfrage im Gespraech. Nur ausfuellen, wenn die "
+                        "Person dazu wirklich etwas gesagt hat."
+                    ),
+                },
                 "local_idea": {
                     "type": "string",
                     "description": (
@@ -76,17 +85,37 @@ TOOLS = [
     },
 ]
 
+CONFIRM_PRINT_TOOL = {
+    "type": "function",
+    "name": "confirm_print",
+    "description": (
+        "Loest den echten Druckauftrag fuer den zuletzt erfassten Wunsch "
+        "aus. Rufe dies SOFORT auf, sobald die Person auf deine Frage "
+        "'Moechtest du deinen Wunsch ausdrucken?' mit Ja antwortet -- das "
+        "ist die Aktion selbst, nicht nur eine Ankuendigung. Bei Nein "
+        "nicht aufrufen."
+    ),
+    "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+    },
+}
+
 
 async def dispatch(name: str, arguments: dict) -> str:
     if name == "submit_wish":
         title = swiss_de(arguments.get("title", ""))
         original_wish = swiss_de(arguments.get("original_wish", ""))
+        why = swiss_de(arguments.get("why", ""))
         local_idea = swiss_de(arguments.get("local_idea", ""))
         if not title.strip() or not original_wish.strip():
             return json.dumps(
                 {"error": "title und original_wish dürfen nicht leer sein -- bitte nochmal aufrufen."}
             )
         about = f"Ursprünglicher Wunsch: {original_wish}"
+        if why:
+            about += f"\n\nWarum: {why}"
         if local_idea:
             about += f"\n\nKonkrete lokale Idee: {local_idea}"
         result = await airtable_client.submit_contribution(

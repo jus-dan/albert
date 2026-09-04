@@ -42,6 +42,22 @@
     color: #0b0d13;
   }
   #save-button:hover { filter: brightness(1.1); }
+  #test-print-button {
+    margin-top: 0.7rem;
+    border: 1px solid var(--card-border);
+    border-radius: 999px;
+    padding: 0.4rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    background: transparent;
+    color: var(--text);
+  }
+  #test-print-button:hover { border-color: var(--accent); }
+  #test-print-button:disabled { opacity: 0.6; cursor: default; }
+  #test-print-feedback { font-size: 0.85rem; margin: 0.4rem 0 0; color: var(--muted); }
+  #test-print-feedback.ok { color: var(--green); }
+  #test-print-feedback.error { color: var(--red); }
   #feedback { margin-top: 0.8rem; font-size: 0.9rem; color: var(--muted); }
   #feedback.ok { color: var(--green); }
   #feedback.error { color: var(--red); }
@@ -94,6 +110,8 @@
         Ohne ausgewählten Drucker bleibt Ausdrucken deaktiviert, auch wenn
         oben angehakt.
       </p>
+      <button id="test-print-button" type="button">Testseite drucken</button>
+      <p id="test-print-feedback" hidden></p>
     </fieldset>
 
     <fieldset>
@@ -128,6 +146,8 @@
     const printerSelect = document.getElementById("printer-select");
     const printerHint = document.getElementById("printer-hint");
     const boardLimitInput = document.getElementById("board-limit-input");
+    const testPrintButton = document.getElementById("test-print-button");
+    const testPrintFeedback = document.getElementById("test-print-feedback");
     const saveButton = document.getElementById("save-button");
     const feedback = document.getElementById("feedback");
 
@@ -220,6 +240,40 @@
       }
     }
 
+    async function testPrint() {
+      const printer_name = printerSelect.value;
+      if (!printer_name) {
+        testPrintFeedback.hidden = false;
+        testPrintFeedback.textContent = "Bitte zuerst einen Drucker auswählen.";
+        testPrintFeedback.className = "error";
+        return;
+      }
+      testPrintButton.disabled = true;
+      testPrintFeedback.hidden = false;
+      testPrintFeedback.textContent = "Wird gedruckt …";
+      testPrintFeedback.className = "";
+      try {
+        const resp = await fetch("/api/print-test", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ printer_name }),
+        });
+        if (resp.ok) {
+          testPrintFeedback.textContent = "✅ Testseite gesendet.";
+          testPrintFeedback.className = "ok";
+        } else {
+          const err = await resp.json().catch(() => ({}));
+          testPrintFeedback.textContent = err.detail || "Testseite fehlgeschlagen.";
+          testPrintFeedback.className = "error";
+        }
+      } catch (err) {
+        testPrintFeedback.textContent = "Testseite fehlgeschlagen (Netzwerkfehler).";
+        testPrintFeedback.className = "error";
+      }
+      testPrintButton.disabled = false;
+    }
+
+    testPrintButton.addEventListener("click", testPrint);
     saveButton.addEventListener("click", save);
     load();
   </script>

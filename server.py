@@ -11,8 +11,8 @@ from fastapi.staticfiles import StaticFiles
 from personas import PERSONAS, greeting_instructions
 from realtime_client import RealtimeClient
 from tools import airtable_client
-from tools.definitions import TOOLS, dispatch as dispatch_tool
-from tools.printing import list_printers, print_pdf_bytes
+from tools.definitions import CONFIRM_PRINT_TOOL, TOOLS, dispatch as dispatch_tool
+from tools.printing import list_printers, print_test_page, print_wunschzettel_directly
 from tools.settings import load_settings, printing_active, save_settings
 from tools.text_utils import swiss_de
 from tools.wunschzettel_pdf import build_wunschzettel_pdf
@@ -100,6 +100,19 @@ async def api_printers():
     return {"printers": list_printers()}
 
 
+@app.post("/api/print-test")
+async def api_print_test(payload: dict):
+    printer_name = payload.get("printer_name") or ""
+    if not printer_name or printer_name not in list_printers():
+        raise HTTPException(status_code=400, detail="Kein gueltiger Drucker ausgewaehlt.")
+    try:
+        print_test_page(printer_name)
+    except Exception:
+        logger.exception("Testseite fehlgeschlagen (%s)", printer_name)
+        raise HTTPException(status_code=500, detail="Testseite konnte nicht gedruckt werden.")
+    return {"status": "ok"}
+
+
 @app.get("/api/board")
 async def api_board():
     limit = load_settings().get("board_item_limit", 15)
@@ -160,14 +173,33 @@ async def api_wish_pdf(record_id: str):
     )
 
 
-@app.post("/api/wish/{record_id}/print")
-async def api_wish_print(record_id: str):
+async def _print_record(record_id: str) -> None:
+    """Wirft eine Exception bei jedem Fehler (kein Drucker, Druckfehler etc.).
+    Druckt direkt per GDI, nicht ueber eine PDF-Datei -- keine externe
+    Anwendung wird dafuer geoeffnet."""
     settings = load_settings()
     if not printing_active(settings):
-        raise HTTPException(status_code=400, detail="Drucken ist nicht aktiviert.")
-    pdf_bytes = await _build_pdf_for_record(record_id)
+        raise RuntimeError("Drucken ist nicht aktiviert.")
     try:
-        print_pdf_bytes(pdf_bytes, settings["selected_printer"])
+        record = await airtable_client.get_record("_input_pipeline", record_id)
+    except Exception:
+        raise HTTPException(status_code=404, detail="Wunsch nicht gefunden.")
+    fields = record.get("fields", {})
+    print_wunschzettel_directly(
+        printer_name=settings["selected_printer"],
+        name=fields.get("name", ""),
+        about=fields.get("about", ""),
+        created_time=record.get("createdTime", ""),
+        record_id=record.get("id", record_id),
+    )
+
+
+@app.post("/api/wish/{record_id}/print")
+async def api_wish_print(record_id: str):
+    try:
+        await _print_record(record_id)
+    except HTTPException:
+        raise
     except Exception:
         logger.exception("Drucken fehlgeschlagen (%s)", record_id)
         raise HTTPException(status_code=500, detail="Drucken fehlgeschlagen.")
@@ -202,6 +234,8 @@ async def albert_socket(websocket: WebSocket, persona_id: str):
         asyncio.create_task(websocket.send_text(json.dumps({"type": "assistant_start"})))
 
     def send_user_transcript(transcript: str):
+        nonlocal awaiting_reply_before_print
+        awaiting_reply_before_print = False
         asyncio.create_task(
             websocket.send_text(json.dumps({"type": "user_message", "text": swiss_de(transcript)}))
         )
@@ -214,8 +248,50 @@ async def albert_socket(websocket: WebSocket, persona_id: str):
         "submit_challenge": "challenge",
     }
 
+    last_wish_record_id = None
+    awaiting_reply_before_print = False
+
     async def handle_tool_call(name: str, arguments: dict) -> str:
+        nonlocal last_wish_record_id, awaiting_reply_before_print
         logger.info("Tool-Aufruf: %s(%s)", name, arguments)
+
+        if name == "confirm_print":
+            if not last_wish_record_id:
+                return json.dumps({"error": "Kein Wunsch zum Ausdrucken vorhanden."})
+            if awaiting_reply_before_print:
+                logger.warning(
+                    "confirm_print blockiert: Druckfrage wurde noch nicht gestellt/beantwortet (Record %s)",
+                    last_wish_record_id,
+                )
+                return json.dumps(
+                    {
+                        "error": (
+                            "Noch nicht erlaubt -- frag zuerst per Sprache, ob die Person "
+                            "drucken moechte, und rufe confirm_print erst auf, nachdem sie "
+                            "darauf geantwortet hat."
+                        )
+                    }
+                )
+            try:
+                await _print_record(last_wish_record_id)
+            except Exception:
+                logger.exception("Drucken fehlgeschlagen (%s)", last_wish_record_id)
+                await websocket.send_text(
+                    json.dumps({"type": "print_status", "status": "error"})
+                )
+                return json.dumps({"error": "Drucken fehlgeschlagen."})
+            await websocket.send_text(json.dumps({"type": "print_status", "status": "ok"}))
+            return json.dumps({"status": "ok"})
+
+        if name == "submit_wish" and printing_on:
+            # Schon HIER (vor dem eigentlichen Speichern) auf "wartet auf
+            # Antwort" setzen, nicht erst nach Abschluss des Airtable-
+            # Aufrufs: das Modell darf die Druckfrage bereits waehrend des
+            # Speicherns stellen (um Stille zu vermeiden), und eine
+            # Antwort der Person, die waehrenddessen eintrifft, muss auch
+            # dann korrekt erkannt werden, wenn sie vor Abschluss des
+            # Speicherns eintrifft.
+            awaiting_reply_before_print = True
 
         result = await dispatch_tool(name, arguments)
 
@@ -225,6 +301,8 @@ async def albert_socket(websocket: WebSocket, persona_id: str):
             except json.JSONDecodeError:
                 parsed = {}
             if parsed.get("status") == "ok":
+                if name == "submit_wish":
+                    last_wish_record_id = parsed.get("record_id")
                 display_name = arguments.get("name") or arguments.get("title", "")
                 entity_type = ENTRY_ENTITY_TYPE.get(name, "")
                 await websocket.send_text(
@@ -254,11 +332,13 @@ async def albert_socket(websocket: WebSocket, persona_id: str):
         on_speech_started=send_speech_started,
     )
 
+    session_tools = TOOLS + [CONFIRM_PRINT_TOOL] if printing_on else TOOLS
+
     try:
         await client.connect(
             voice=persona.voice,
             instructions=persona.system_instructions(printing_enabled=printing_on),
-            tools=TOOLS,
+            tools=session_tools,
             push_to_talk=push_to_talk,
         )
     except Exception:

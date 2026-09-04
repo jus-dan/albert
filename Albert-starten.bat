@@ -30,6 +30,16 @@ if exist ".git" (
     )
 )
 
+rem --- Aktuelle Version anzeigen ---
+set "ALBERT_VERSION="
+where git >nul 2>nul
+if not errorlevel 1 (
+    for /f "delims=" %%v in ('git describe --tags 2^>nul') do set "ALBERT_VERSION=%%v"
+)
+if "!ALBERT_VERSION!"=="" set "ALBERT_VERSION=unbekannt"
+echo Version: !ALBERT_VERSION!
+echo.
+
 rem --- Python suchen ---
 set "PYTHON_CMD="
 where python >nul 2>nul
