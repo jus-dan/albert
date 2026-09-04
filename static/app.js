@@ -9,6 +9,8 @@ const statusText = document.getElementById("status-text");
 const toggleButton = document.getElementById("toggle-button");
 const micWarning = document.getElementById("mic-warning");
 const micIndicator = document.getElementById("mic-indicator");
+const audioDebug = document.getElementById("audio-debug");
+const modeHint = document.getElementById("mode-hint");
 const chatLog = document.getElementById("chat-log");
 const backButton = document.getElementById("back-button");
 
@@ -19,13 +21,16 @@ let micStream = null;
 let micSource = null;
 let micProcessor = null;
 let micReady = false;
-let isRecording = false;
 let isActive = false;
+let isRecording = false;
+let interactionMode = "vad";
+let showDebugInfo = false;
 let playhead = 0;
 let activeSources = [];
 let pendingUserBubbles = [];
 let currentAssistantBubble = null;
 let currentReveal = null;
+let sentChunkCount = 0;
 
 const REVEAL_CHARS_PER_SEC = 24;
 
@@ -79,14 +84,54 @@ const ENTITY_TYPE_LABELS = {
   initiative: "Initiative",
   organization: "Organisation",
   person: "Person",
+  future_wish: "Zukunftswunsch",
+  challenge: "Challenge",
 };
 
 function addEntryNotice(message) {
   const notice = document.createElement("div");
   notice.className = "entry-notice";
   const typeLabel = ENTITY_TYPE_LABELS[message.entity_type] || message.entity_type;
-  notice.textContent = `Neuer Eintrag erfasst: "${message.name}" (${typeLabel}) — Tabelle ${message.table}, ID ${message.record_id}`;
+  notice.textContent = `Neuer Eintrag erfasst: "${message.name}" (${typeLabel})`;
   chatLog.appendChild(notice);
+  chatLog.scrollTop = chatLog.scrollHeight;
+}
+
+function addPrintLink(recordId) {
+  const wrap = document.createElement("div");
+  wrap.className = "print-actions";
+
+  const printButton = document.createElement("button");
+  printButton.type = "button";
+  printButton.className = "print-link";
+  printButton.textContent = "🖨️ Jetzt ausdrucken";
+  printButton.addEventListener("click", async () => {
+    printButton.disabled = true;
+    printButton.textContent = "Wird gedruckt …";
+    try {
+      const resp = await fetch(`/api/wish/${encodeURIComponent(recordId)}/print`, { method: "POST" });
+      if (resp.ok) {
+        printButton.textContent = "✅ Gedruckt";
+      } else {
+        printButton.textContent = "⚠️ Drucken fehlgeschlagen";
+        printButton.disabled = false;
+      }
+    } catch (err) {
+      printButton.textContent = "⚠️ Drucken fehlgeschlagen";
+      printButton.disabled = false;
+    }
+  });
+  wrap.appendChild(printButton);
+
+  const viewLink = document.createElement("a");
+  viewLink.href = `/api/wish/${encodeURIComponent(recordId)}/pdf`;
+  viewLink.target = "_blank";
+  viewLink.rel = "noopener";
+  viewLink.className = "print-view-link";
+  viewLink.textContent = "PDF ansehen";
+  wrap.appendChild(viewLink);
+
+  chatLog.appendChild(wrap);
   chatLog.scrollTop = chatLog.scrollHeight;
 }
 
@@ -148,13 +193,10 @@ function stopAllAudio() {
   activeSources = [];
 }
 
-function interruptPlayback() {
+function stopPlaybackForBargeIn() {
   stopAllAudio();
   if (audioContext) {
     playhead = audioContext.currentTime;
-  }
-  if (socket && socket.readyState === WebSocket.OPEN) {
-    socket.send(JSON.stringify({ type: "interrupt" }));
   }
 }
 
@@ -187,6 +229,11 @@ function connectSocket(personaId) {
       }
     } else if (message.type === "new_entry") {
       addEntryNotice(message);
+    } else if (message.type === "print_link") {
+      addPrintLink(message.record_id);
+    } else if (message.type === "user_speaking") {
+      stopPlaybackForBargeIn();
+      pendingUserBubbles.push(addMessage("user", "…"));
     } else if (message.type === "error") {
       setStatus("error", message.message || "Fehler");
     }
@@ -203,7 +250,9 @@ function connectSocket(personaId) {
 
 async function setupMic() {
   try {
-    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    micStream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+    });
   } catch (err) {
     micWarning.hidden = false;
     return;
@@ -214,21 +263,34 @@ async function setupMic() {
   const silentGain = audioContext.createGain();
   silentGain.gain.value = 0;
 
+  sentChunkCount = 0;
+  if (showDebugInfo) {
+    audioDebug.hidden = false;
+    audioDebug.textContent = "Audio-Chunks gesendet: 0";
+  }
+
   micProcessor.onaudioprocess = (event) => {
-    if (!isRecording || !socket || socket.readyState !== WebSocket.OPEN) return;
+    if (!isActive || !socket || socket.readyState !== WebSocket.OPEN) return;
+    if (interactionMode === "push_to_talk" && !isRecording) return;
     const input = event.inputBuffer.getChannelData(0);
     const pcm16 = floatTo16BitPCM(input);
     socket.send(JSON.stringify({ type: "audio_chunk", audio: arrayBufferToBase64(pcm16.buffer) }));
+    sentChunkCount += 1;
+    if (showDebugInfo) {
+      audioDebug.textContent = `Audio-Chunks gesendet: ${sentChunkCount}`;
+    }
   };
 
   micSource.connect(micProcessor);
   micProcessor.connect(silentGain);
   silentGain.connect(audioContext.destination);
   micReady = true;
+  if (interactionMode !== "push_to_talk") {
+    micIndicator.hidden = false;
+  }
 }
 
 function stopMicCapture() {
-  isRecording = false;
   micReady = false;
   if (micProcessor) {
     micProcessor.disconnect();
@@ -271,10 +333,12 @@ async function startSession() {
 
 function stopSession() {
   isActive = false;
+  isRecording = false;
   toggleButton.textContent = "Start";
   toggleButton.classList.remove("toggle-stop");
   toggleButton.classList.add("toggle-start");
   micIndicator.hidden = true;
+  audioDebug.hidden = true;
   flushReveal();
 
   if (socket) {
@@ -298,12 +362,35 @@ function selectPersona(personaId) {
   chatLog.innerHTML = "";
   micWarning.hidden = true;
   micIndicator.hidden = true;
+  audioDebug.hidden = true;
+  modeHint.hidden = false;
+  modeHint.textContent =
+    interactionMode === "push_to_talk"
+      ? "Leertaste gedrückt halten zum Sprechen"
+      : "Einfach drauflos reden — kein Knopf nötig";
   setStatus("inactive", "Inaktiv");
 }
 
 document.querySelectorAll(".persona-card").forEach((btn) => {
   btn.addEventListener("click", () => selectPersona(btn.dataset.persona));
 });
+
+async function loadSettings() {
+  try {
+    const resp = await fetch("/api/settings");
+    const data = await resp.json();
+    interactionMode = data.interaction_mode || "vad";
+    showDebugInfo = !!data.show_debug_info;
+    const enabled = data.enabled_personas || ["albert", "albertine", "alex"];
+    document.querySelectorAll(".persona-card").forEach((btn) => {
+      btn.hidden = !enabled.includes(btn.dataset.persona);
+    });
+  } catch (err) {
+    /* Standardwerte (alle Personen, freihaendig) beibehalten */
+  }
+}
+
+loadSettings();
 
 toggleButton.addEventListener("click", () => {
   if (isActive) {
@@ -321,15 +408,20 @@ backButton.addEventListener("click", () => {
 });
 
 document.addEventListener("keydown", (event) => {
+  if (interactionMode !== "push_to_talk") return;
   if (event.code !== "Space" || conversation.hidden || event.repeat) return;
   event.preventDefault();
   if (!isActive || !micReady || isRecording) return;
   isRecording = true;
   micIndicator.hidden = false;
-  interruptPlayback();
+  stopPlaybackForBargeIn();
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify({ type: "interrupt" }));
+  }
 });
 
 document.addEventListener("keyup", (event) => {
+  if (interactionMode !== "push_to_talk") return;
   if (event.code !== "Space" || conversation.hidden) return;
   event.preventDefault();
   if (!isRecording) return;

@@ -1,120 +1,123 @@
 import json
 
-from tools import airtable_client, events
+from tools import airtable_client
+from tools.text_utils import swiss_de
 
 TOOLS = [
     {
         "type": "function",
-        "name": "list_entities",
+        "name": "submit_wish",
         "description": (
-            "Sucht vorhandene Eintraege im Oekosystem und gibt Name, Typ und "
-            "Beschreibung zurueck. Durchsucht IMMER alle Kategorien gleichzeitig "
-            "(Initiativen, Organisationen UND Personen) -- du musst den Typ nicht "
-            "vorher erraten. Nutze dies, wenn der Nutzer wissen will, was es "
-            "bereits gibt."
+            "Erfasst einen Zukunftswunsch zur späteren Prüfung durch das Team: "
+            "den ursprünglichen Wunsch der Person und, falls sie selbst eine "
+            "gefunden hat, ihre eigene konkrete lokale Idee dazu. Rufe dies erst "
+            "auf, NACHDEM du der Person durch Fragen Gelegenheit gegeben hast, "
+            "vom abstrakten Wunsch zu einer eigenen konkreten Idee zu kommen -- "
+            "nicht schon beim ersten, noch abstrakten Wunsch. Wenn der Person "
+            "trotz Rückfrage keine eigene Idee einfällt, erfasse einfach nur "
+            "den Wunsch, ohne local_idea."
         ),
         "parameters": {
             "type": "object",
             "properties": {
-                "query": {
+                "title": {
+                    "type": "string",
+                    "description": "Kurzer, prägnanter Titel -- der lokalen Idee, oder sonst des Wunsches selbst.",
+                },
+                "original_wish": {
+                    "type": "string",
+                    "description": "Der Wunsch, so wie die Person ihn zuerst geäussert hat, z.B. 'Weltfrieden'.",
+                },
+                "local_idea": {
                     "type": "string",
                     "description": (
-                        "Optionales Suchwort, z.B. ein Thema oder Name. Leer lassen, "
-                        "um die neuesten Eintraege ganz allgemein zu zeigen."
+                        "Die von der Person SELBST entwickelte konkrete, lokale "
+                        "Idee bzw. Handlung, die auf diesen Wunsch einzahlt. Nur "
+                        "ausfüllen, wenn die Idee wirklich von der Person kam, "
+                        "nicht von dir. Sonst weglassen."
                     ),
                 },
+                "contact_name": {
+                    "type": "string",
+                    "description": "Name der Person, falls freiwillig genannt (optional).",
+                },
             },
-            "required": [],
+            "required": ["title", "original_wish"],
         },
     },
     {
         "type": "function",
-        "name": "submit_contribution",
+        "name": "submit_challenge",
         "description": (
-            "Erfasst einen neuen Beitrag (Organisation, Person, Initiative, "
-            "Challenge oder Event), den der Nutzer erzaehlt hat, zur spaeteren "
-            "Pruefung durch das Team. Nutze dies, wenn der Nutzer dir etwas Neues "
-            "mitteilen moechte. Stelle je nach Typ passende Rueckfragen, bevor du "
-            "das Tool aufrufst: bei einer Person z.B. nach Kontakt-E-Mail und "
-            "Organisation, bei einem Event nach Ort und Datum/Zeit, bei einer "
-            "Challenge, ob es eher ein akutes Problem oder ein Wunsch fuer die "
-            "Zukunft ist, bei Organisation/Initiative nach der Website."
+            "Erfasst ein Anliegen oder eine Beobachtung, die die Person "
+            "beschäftigt (kein Wunsch), zur späteren Prüfung durch das "
+            "Team -- damit sichtbar wird, was die Leute gerade umtreibt. "
+            "Nutze dies, wenn die Person kein Zukunftswunsch, sondern eine "
+            "Sorge, ein Problem oder eine Beobachtung teilt."
         ),
         "parameters": {
             "type": "object",
             "properties": {
-                "entity_type": {
+                "title": {
                     "type": "string",
-                    "enum": ["organization", "person", "initiative", "challenge", "event"],
-                    "description": "Um welche Art von Beitrag es sich handelt.",
+                    "description": "Kurzer, prägnanter Titel für das Anliegen.",
                 },
-                "name": {
+                "description": {
                     "type": "string",
-                    "description": "Name der Organisation, Person, Initiative, Challenge oder des Events.",
+                    "description": "Was die Person beschäftigt oder beobachtet hat, so wie sie es erzählt hat.",
                 },
-                "about": {
+                "contact_name": {
                     "type": "string",
-                    "description": "Kurze Zusammenfassung dessen, was der Nutzer erzaehlt hat.",
-                },
-                "contact_email": {
-                    "type": "string",
-                    "description": "Kontakt-E-Mail, falls genannt (v.a. bei Personen).",
-                },
-                "website": {
-                    "type": "string",
-                    "description": "Website, falls genannt.",
-                },
-                "event_location": {
-                    "type": "string",
-                    "description": "Ort des Events, falls entity_type 'event' ist.",
-                },
-                "start_date_time": {
-                    "type": "string",
-                    "description": "Start-Datum/Zeit des Events, falls entity_type 'event' ist.",
-                },
-                "end_date_time": {
-                    "type": "string",
-                    "description": "End-Datum/Zeit des Events, falls entity_type 'event' ist.",
-                },
-                "challenge_framing": {
-                    "type": "string",
-                    "enum": ["challenge", "future_wish"],
-                    "description": (
-                        "Nur falls entity_type 'challenge' ist: 'challenge' fuer ein "
-                        "akutes Problem, 'future_wish' fuer einen Wunsch/eine Idee "
-                        "fuer die Zukunft."
-                    ),
+                    "description": "Name der Person, falls freiwillig genannt (optional).",
                 },
             },
-            "required": ["entity_type", "name", "about"],
+            "required": ["title", "description"],
         },
     },
 ]
 
 
 async def dispatch(name: str, arguments: dict) -> str:
-    if name == "list_entities":
-        query = arguments.get("query", "")
-        results = await airtable_client.search_all_entities(query=query)
-        events.log_event("search", "all", query or "(alle)")
-        if not results:
-            return json.dumps({"count": 0, "results": []})
-        return json.dumps({"count": len(results), "results": results})
-
-    if name == "submit_contribution":
+    if name == "submit_wish":
+        title = swiss_de(arguments.get("title", ""))
+        original_wish = swiss_de(arguments.get("original_wish", ""))
+        local_idea = swiss_de(arguments.get("local_idea", ""))
+        if not title.strip() or not original_wish.strip():
+            return json.dumps(
+                {"error": "title und original_wish dürfen nicht leer sein -- bitte nochmal aufrufen."}
+            )
+        about = f"Ursprünglicher Wunsch: {original_wish}"
+        if local_idea:
+            about += f"\n\nKonkrete lokale Idee: {local_idea}"
         result = await airtable_client.submit_contribution(
-            entity_type=arguments.get("entity_type", ""),
-            name=arguments.get("name", ""),
-            about=arguments.get("about", ""),
-            contact_email=arguments.get("contact_email", ""),
-            website=arguments.get("website", ""),
-            raw_text=arguments.get("about", ""),
-            event_location=arguments.get("event_location", ""),
-            start_date_time=arguments.get("start_date_time", ""),
-            end_date_time=arguments.get("end_date_time", ""),
-            challenge_framing=arguments.get("challenge_framing", ""),
+            entity_type="future_action",
+            name=title,
+            about=about,
+            contact_email="",
+            website="",
+            raw_text=about,
+            challenge_framing="future_wish",
         )
-        events.log_event("contribution", arguments.get("entity_type", ""), arguments.get("name", ""))
+        return json.dumps(
+            {"status": "ok", "table": result["table"], "record_id": result["record_id"]}
+        )
+
+    if name == "submit_challenge":
+        title = swiss_de(arguments.get("title", ""))
+        description = swiss_de(arguments.get("description", ""))
+        if not title.strip() or not description.strip():
+            return json.dumps(
+                {"error": "title und description dürfen nicht leer sein -- bitte nochmal aufrufen."}
+            )
+        result = await airtable_client.submit_contribution(
+            entity_type="challenge",
+            name=title,
+            about=description,
+            contact_email="",
+            website="",
+            raw_text=description,
+            challenge_framing="challenge",
+        )
         return json.dumps(
             {"status": "ok", "table": result["table"], "record_id": result["record_id"]}
         )

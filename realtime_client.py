@@ -2,14 +2,26 @@ import asyncio
 import base64
 import json
 import logging
+import time
 
 import websockets
+from langdetect import LangDetectException, detect
 
 from config import ALBERT_INSTRUCTIONS, OPENAI_API_KEY, REALTIME_MODEL, SAMPLE_RATE, VOICE
 
 logger = logging.getLogger("albert.realtime")
 
 REALTIME_URL = f"wss://api.openai.com/v1/realtime?model={REALTIME_MODEL}"
+
+# Kuerzer als das gilt nicht als echte Sprache (z.B. kurzes Anpusten des
+# Mikrofons oder ein Rascheln) -- lang genug, dass ein kurzes "Ja"/"Nein"
+# trotzdem durchkommt.
+MIN_SPEECH_DURATION_S = 0.35
+
+# Laenger als das muss jemand sprechen, damit es Albert WAEHREND er selbst
+# spricht unterbricht -- ein kurzes Raeuspern soll ihn nicht mitten im Satz
+# abwuergen. Absichtlich deutlich laenger als MIN_SPEECH_DURATION_S.
+BARGE_IN_CONFIRM_DELAY_S = 2.5
 
 
 class RealtimeClient:
@@ -22,20 +34,28 @@ class RealtimeClient:
         on_response_start=None,
         on_user_transcript=None,
         on_tool_call=None,
+        on_speech_started=None,
     ):
         self._on_audio_delta = on_audio_delta
         self._on_transcript_delta = on_transcript_delta
         self._on_response_start = on_response_start
         self._on_user_transcript = on_user_transcript
         self._on_tool_call = on_tool_call
+        self._on_speech_started = on_speech_started
         self._ws = None
         self._recv_task = None
+        self._response_active = False
+        self._response_started_at: float | None = None
+        self._speech_started_at: float | None = None
+        self._language_locked = False
+        self._session: dict | None = None
 
     async def connect(
         self,
         voice: str | None = None,
         instructions: str | None = None,
         tools: list[dict] | None = None,
+        push_to_talk: bool = False,
     ):
         headers = {
             "Authorization": f"Bearer {OPENAI_API_KEY}",
@@ -45,6 +65,25 @@ class RealtimeClient:
             additional_headers=headers,
             max_size=None,
         )
+        if push_to_talk:
+            # Leertaste steuert das Turn-Taking selbst, keine
+            # serverseitige Sprachpausenerkennung.
+            turn_detection = None
+        else:
+            # Server-seitige Sprachpausenerkennung: Mikro streamt
+            # durchgehend, kein Push-to-Talk noetig. create_response
+            # und interrupt_response bewusst aus -- wir loesen Antwort
+            # und Unterbrechung selbst explizit ueber die
+            # speech_started/speech_stopped-Events aus (Zeile unten),
+            # statt uns auf das automatische API-Verhalten zu verlassen.
+            turn_detection = {
+                "type": "server_vad",
+                "threshold": 0.55,
+                "prefix_padding_ms": 300,
+                "silence_duration_ms": 500,
+                "create_response": False,
+                "interrupt_response": False,
+            }
         session: dict = {
             "type": "realtime",
             "model": REALTIME_MODEL,
@@ -53,9 +92,12 @@ class RealtimeClient:
             "audio": {
                 "input": {
                     "format": {"type": "audio/pcm", "rate": SAMPLE_RATE},
-                    # Push-to-talk steuert das Turn-Taking selbst,
-                    # daher keine serverseitige Voice-Activity-Detection.
-                    "turn_detection": None,
+                    "turn_detection": turn_detection,
+                    # Sprache wird bei der ersten Aeusserung automatisch
+                    # erkannt (kein fester Wert -- koennte z.B. auch
+                    # Franzoesisch oder Italienisch sein) und danach per
+                    # _lock_language() fest eingestellt, damit sie waehrend
+                    # des Gespraechs nicht mehr abdriftet.
                     "transcription": {"model": "gpt-4o-mini-transcribe"},
                 },
                 "output": {
@@ -68,6 +110,7 @@ class RealtimeClient:
             session["tools"] = tools
             session["tool_choice"] = "auto"
 
+        self._session = session
         await self._send({"type": "session.update", "session": session})
         self._recv_task = asyncio.create_task(self._receive_loop())
 
@@ -93,8 +136,9 @@ class RealtimeClient:
     async def commit(self):
         await self._send({"type": "input_audio_buffer.commit"})
 
-    async def cancel_response(self):
-        await self._send({"type": "response.cancel"})
+    async def commit_and_respond(self):
+        await self.commit()
+        await self.create_response()
 
     async def create_response(self, instructions: str | None = None):
         event = {"type": "response.create"}
@@ -102,9 +146,54 @@ class RealtimeClient:
             event["response"] = {"instructions": instructions}
         await self._send(event)
 
-    async def commit_and_respond(self):
-        await self.commit()
-        await self.create_response()
+    async def cancel_response(self):
+        await self._send({"type": "response.cancel"})
+
+    async def _lock_language_from_transcript(self, transcript: str):
+        # Bei der ersten echten Aeusserung die Sprache erkennen und danach
+        # fest einstellen, damit die Transkription waehrend des restlichen
+        # Gespraechs nicht mehr in eine andere Sprache abdriftet.
+        if self._language_locked or not transcript or len(transcript.strip()) < 3:
+            return
+        try:
+            lang = detect(transcript)
+        except LangDetectException:
+            return
+        self._language_locked = True
+        logger.info("Sprache erkannt und fixiert: %s", lang)
+        if self._session is not None:
+            # Die komplette, zuletzt gesendete Session-Konfiguration erneut
+            # verschicken (nur mit geaenderter Sprache) statt eines
+            # Teil-Updates -- unklar, ob die API verschachtelte Objekte bei
+            # einem Teil-Update mergt oder ersetzt, und ein versehentliches
+            # Zuruecksetzen von turn_detection/tools waere schwer zu
+            # bemerken, aber fatal fuers Erfassen.
+            self._session["audio"]["input"]["transcription"]["language"] = lang
+            await self._send({"type": "session.update", "session": self._session})
+
+    async def _confirm_barge_in(self, started_at: float):
+        # Deutlich laenger abwarten, bevor die laufende Antwort wirklich
+        # unterbrochen wird -- ein Raeuspern oder kurzes Geraeusch soll
+        # Albert nicht mitten im Satz abwuergen. Nur wenn die Sprachphase,
+        # die diesen Aufruf ausgeloest hat, noch dieselbe ist (kein
+        # speech_stopped dazwischen), gilt es als echte Unterbrechung.
+        await asyncio.sleep(BARGE_IN_CONFIRM_DELAY_S)
+        if self._speech_started_at != started_at:
+            return
+        if self._on_speech_started:
+            self._on_speech_started()
+        # NUR abbrechen, wenn die aktive Antwort schon lief, BEVOR diese
+        # Sprachphase begann -- sonst wuerde eine verzoegerte Bestaetigung
+        # eine voellig neue, inzwischen gestartete Antwort abwuergen (z.B.
+        # gerade den Tool-Aufruf zum Erfassen des Wunsches), obwohl das
+        # Geraeusch laengst vorbei ist. Das fuehrte zu leeren
+        # submit_wish/submit_challenge-Aufrufen.
+        if (
+            self._response_active
+            and self._response_started_at is not None
+            and self._response_started_at < started_at
+        ):
+            await self.cancel_response()
 
     async def _handle_tool_call(self, event: dict):
         call_id = event.get("call_id")
@@ -146,15 +235,40 @@ class RealtimeClient:
                     await self._on_audio_delta(audio_bytes)
                 elif event_type == "response.output_audio_transcript.delta" and self._on_transcript_delta:
                     self._on_transcript_delta(event.get("delta", ""))
-                elif event_type == "response.created" and self._on_response_start:
-                    self._on_response_start()
-                elif (
-                    event_type == "conversation.item.input_audio_transcription.completed"
-                    and self._on_user_transcript
-                ):
-                    self._on_user_transcript(event.get("transcript", ""))
+                elif event_type == "response.created":
+                    self._response_active = True
+                    self._response_started_at = time.monotonic()
+                    if self._on_response_start:
+                        self._on_response_start()
+                elif event_type == "response.done":
+                    self._response_active = False
+                elif event_type == "conversation.item.input_audio_transcription.completed":
+                    transcript = event.get("transcript", "")
+                    await self._lock_language_from_transcript(transcript)
+                    if self._on_user_transcript:
+                        self._on_user_transcript(transcript)
                 elif event_type == "response.function_call_arguments.done":
                     await self._handle_tool_call(event)
+                elif event_type == "input_audio_buffer.speech_started":
+                    logger.info("VAD: Sprache erkannt")
+                    self._speech_started_at = time.monotonic()
+                    asyncio.create_task(self._confirm_barge_in(self._speech_started_at))
+                elif event_type == "input_audio_buffer.speech_stopped":
+                    duration = (
+                        time.monotonic() - self._speech_started_at
+                        if self._speech_started_at is not None
+                        else None
+                    )
+                    if duration is not None and duration < MIN_SPEECH_DURATION_S:
+                        logger.info(
+                            "VAD: Sprachende erkannt, aber nur %.2fs -- ignoriere (vermutlich Geraeusch)",
+                            duration,
+                        )
+                    elif self._response_active:
+                        logger.info("VAD: Sprachende erkannt, aber schon eine Antwort aktiv -- ignoriere")
+                    else:
+                        logger.info("VAD: Sprachende erkannt (%.2fs), erzeuge Antwort", duration or 0)
+                        await self.create_response()
                 elif event_type == "error":
                     logger.error("Realtime-API-Fehler: %s", event.get("error"))
                 elif event_type in ("session.created", "session.updated"):

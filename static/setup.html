@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Albert – Einstellungen</title>
+<link rel="stylesheet" href="style.css" />
+<style>
+  body { align-items: flex-start; }
+  #setup-app { max-width: 520px; margin-top: 2rem; }
+  .back-link { color: var(--muted); text-decoration: none; font-size: 0.9rem; }
+  .back-link:hover { color: var(--text); }
+  h1 { text-align: left; margin: 1rem 0 1.5rem; }
+  fieldset {
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 1rem 1.2rem 1.2rem;
+    margin: 0 0 1.2rem;
+  }
+  legend { padding: 0 0.4rem; color: var(--text); font-weight: 600; }
+  .option { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0; font-size: 0.95rem; }
+  .option input { width: 1.1rem; height: 1.1rem; }
+  .hint { color: var(--muted); font-size: 0.85rem; margin: 0.3rem 0 0; }
+  select {
+    width: 100%;
+    padding: 0.5rem 0.6rem;
+    border-radius: 8px;
+    border: 1px solid var(--card-border);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+  }
+  #save-button {
+    border: none;
+    border-radius: 999px;
+    padding: 0.6rem 1.6rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    background: var(--green);
+    color: #0b0d13;
+  }
+  #save-button:hover { filter: brightness(1.1); }
+  #feedback { margin-top: 0.8rem; font-size: 0.9rem; color: var(--muted); }
+  #feedback.ok { color: var(--green); }
+  #feedback.error { color: var(--red); }
+</style>
+</head>
+<body>
+  <main id="setup-app">
+    <a class="back-link" href="/">&larr; Zurück zu Albert</a>
+    <h1>Einstellungen</h1>
+
+    <fieldset>
+      <legend>Angezeigte Personen</legend>
+      <label class="option">
+        <input type="checkbox" name="persona" value="albert" />
+        Albert
+      </label>
+      <label class="option">
+        <input type="checkbox" name="persona" value="albertine" />
+        Albertine
+      </label>
+      <label class="option">
+        <input type="checkbox" name="persona" value="alex" />
+        Alex
+      </label>
+      <p class="hint">Mindestens eine Person muss ausgewählt bleiben.</p>
+    </fieldset>
+
+    <fieldset>
+      <legend>Sprachsteuerung</legend>
+      <label class="option">
+        <input type="radio" name="mode" value="vad" />
+        Freihändig — Mikrofon hört automatisch zu
+      </label>
+      <label class="option">
+        <input type="radio" name="mode" value="push_to_talk" />
+        Leertaste gedrückt halten zum Sprechen
+      </label>
+    </fieldset>
+
+    <fieldset>
+      <legend>Drucken</legend>
+      <label class="option">
+        <input type="checkbox" id="printing-checkbox" />
+        Ausdrucken aktivieren
+      </label>
+      <select id="printer-select">
+        <option value="">Kein Drucker ausgewählt</option>
+      </select>
+      <p class="hint" id="printer-hint">
+        Ohne ausgewählten Drucker bleibt Ausdrucken deaktiviert, auch wenn
+        oben angehakt.
+      </p>
+    </fieldset>
+
+    <fieldset>
+      <legend>Themen-Board</legend>
+      <label class="option" style="display:block;">
+        Anzahl Einträge pro Spalte (neueste zuerst)
+        <input type="number" id="board-limit-input" min="1" max="50" style="width:100%; padding:0.5rem 0.6rem; border-radius:8px; border:1px solid var(--card-border); background:var(--bg); color:var(--text); font-size:0.9rem; margin-top:0.5rem;" />
+      </label>
+      <p class="hint">
+        Zeigt live die neuesten Challenges bzw. Wünsche direkt aus der
+        Datenbank — immer synchron, kein separater lokaler Zwischenspeicher.
+      </p>
+    </fieldset>
+
+    <fieldset>
+      <legend>Diagnose</legend>
+      <label class="option">
+        <input type="checkbox" id="debug-checkbox" />
+        Debug-Informationen im Gespräch anzeigen (z.B. Audio-Chunk-Zähler)
+      </label>
+    </fieldset>
+
+    <button id="save-button" type="button">Speichern</button>
+    <p id="feedback" hidden></p>
+  </main>
+
+  <script>
+    const PERSONA_BOXES = document.querySelectorAll('input[name="persona"]');
+    const MODE_RADIOS = document.querySelectorAll('input[name="mode"]');
+    const debugCheckbox = document.getElementById("debug-checkbox");
+    const printingCheckbox = document.getElementById("printing-checkbox");
+    const printerSelect = document.getElementById("printer-select");
+    const printerHint = document.getElementById("printer-hint");
+    const boardLimitInput = document.getElementById("board-limit-input");
+    const saveButton = document.getElementById("save-button");
+    const feedback = document.getElementById("feedback");
+
+    async function loadPrinters(selected) {
+      try {
+        const resp = await fetch("/api/printers");
+        const data = await resp.json();
+        const printers = data.printers || [];
+        printerSelect.innerHTML = '<option value="">Kein Drucker ausgewählt</option>';
+        printers.forEach((name) => {
+          const opt = document.createElement("option");
+          opt.value = name;
+          opt.textContent = name;
+          printerSelect.appendChild(opt);
+        });
+        if (printers.length === 0) {
+          printerHint.textContent = "Keine Drucker auf diesem Gerät gefunden.";
+        }
+        printerSelect.value = selected && printers.includes(selected) ? selected : "";
+      } catch (err) {
+        printerHint.textContent = "Drucker-Liste konnte nicht geladen werden.";
+      }
+    }
+
+    async function load() {
+      try {
+        const resp = await fetch("/api/settings");
+        const data = await resp.json();
+        const enabled = data.enabled_personas || [];
+        PERSONA_BOXES.forEach((box) => {
+          box.checked = enabled.includes(box.value);
+        });
+        MODE_RADIOS.forEach((radio) => {
+          radio.checked = radio.value === (data.interaction_mode || "vad");
+        });
+        debugCheckbox.checked = !!data.show_debug_info;
+        printingCheckbox.checked = !!data.printing_enabled;
+        boardLimitInput.value = data.board_item_limit || 15;
+        await loadPrinters(data.selected_printer || "");
+      } catch (err) {
+        feedback.hidden = false;
+        feedback.textContent = "Einstellungen konnten nicht geladen werden.";
+        feedback.className = "error";
+      }
+    }
+
+    async function save() {
+      const enabled_personas = [...PERSONA_BOXES].filter((b) => b.checked).map((b) => b.value);
+      const modeRadio = [...MODE_RADIOS].find((r) => r.checked);
+      const interaction_mode = modeRadio ? modeRadio.value : "vad";
+
+      if (enabled_personas.length === 0) {
+        feedback.hidden = false;
+        feedback.textContent = "Mindestens eine Person muss ausgewählt bleiben.";
+        feedback.className = "error";
+        return;
+      }
+
+      const show_debug_info = debugCheckbox.checked;
+      const printing_enabled = printingCheckbox.checked;
+      const selected_printer = printerSelect.value;
+      const board_item_limit = parseInt(boardLimitInput.value, 10) || 15;
+
+      try {
+        const resp = await fetch("/api/settings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            enabled_personas,
+            interaction_mode,
+            show_debug_info,
+            printing_enabled,
+            selected_printer,
+            board_item_limit,
+          }),
+        });
+        feedback.hidden = false;
+        if (resp.ok) {
+          feedback.textContent = "Gespeichert.";
+          feedback.className = "ok";
+        } else {
+          const err = await resp.json().catch(() => ({}));
+          feedback.textContent = err.detail || "Konnte nicht gespeichert werden.";
+          feedback.className = "error";
+        }
+      } catch (err) {
+        feedback.hidden = false;
+        feedback.textContent = "Konnte nicht gespeichert werden (Netzwerkfehler).";
+        feedback.className = "error";
+      }
+    }
+
+    saveButton.addEventListener("click", save);
+    load();
+  </script>
+
+  <footer id="version-footer" class="version-footer">
+    <a href="/setup.html">Einstellungen</a>
+    &nbsp;·&nbsp;
+    <a href="https://github.com/jus-dan/albert" target="_blank" rel="noopener" id="version-text"></a>
+  </footer>
+  <script>
+    fetch("/api/version")
+      .then((r) => r.json())
+      .then((d) => { document.getElementById("version-text").textContent = d.version; })
+      .catch(() => {});
+  </script>
+</body>
+</html>

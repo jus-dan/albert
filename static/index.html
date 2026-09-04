@@ -60,8 +60,6 @@
       </div>
       <p class="debug-link">
         <a href="/board.html">Themen-Board anzeigen</a>
-        &nbsp;·&nbsp;
-        <a href="/debug.html">Debug: Datenbank-Suche testen</a>
       </p>
     </section>
 
@@ -76,21 +74,26 @@
 
       <button id="toggle-button" class="toggle-button toggle-start" type="button">Start</button>
 
-      <p class="hint">Leertaste gedrückt halten zum Sprechen</p>
+      <p id="mode-hint" class="hint" hidden></p>
       <p id="mic-warning" class="mic-warning" hidden>
         Kein Mikrofonzugriff — Sprechen ist nicht möglich.
       </p>
       <div id="mic-indicator" class="mic-indicator" hidden>&#127908; hört zu ...</div>
+      <div id="audio-debug" class="audio-debug" hidden></div>
 
       <div id="chat-log" class="chat-log"></div>
     </section>
   </main>
-  <footer id="version-footer" class="version-footer"></footer>
+  <footer id="version-footer" class="version-footer">
+    <a href="/setup.html">Einstellungen</a>
+    &nbsp;·&nbsp;
+    <a href="https://github.com/jus-dan/albert" target="_blank" rel="noopener" id="version-text"></a>
+  </footer>
   <script src="app.js"></script>
   <script>
     fetch("/api/version")
       .then((r) => r.json())
-      .then((d) => { document.getElementById("version-footer").textContent = d.version; })
+      .then((d) => { document.getElementById("version-text").textContent = d.version; })
       .catch(() => {});
   </script>
 </body>
