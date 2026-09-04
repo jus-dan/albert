@@ -283,6 +283,16 @@ async def albert_socket(websocket: WebSocket, persona_id: str):
             await websocket.send_text(json.dumps({"type": "print_status", "status": "ok"}))
             return json.dumps({"status": "ok"})
 
+        if name == "submit_wish" and printing_on:
+            # Schon HIER (vor dem eigentlichen Speichern) auf "wartet auf
+            # Antwort" setzen, nicht erst nach Abschluss des Airtable-
+            # Aufrufs: das Modell darf die Druckfrage bereits waehrend des
+            # Speicherns stellen (um Stille zu vermeiden), und eine
+            # Antwort der Person, die waehrenddessen eintrifft, muss auch
+            # dann korrekt erkannt werden, wenn sie vor Abschluss des
+            # Speicherns eintrifft.
+            awaiting_reply_before_print = True
+
         result = await dispatch_tool(name, arguments)
 
         if name in ("submit_wish", "submit_challenge"):
@@ -293,7 +303,6 @@ async def albert_socket(websocket: WebSocket, persona_id: str):
             if parsed.get("status") == "ok":
                 if name == "submit_wish":
                     last_wish_record_id = parsed.get("record_id")
-                    awaiting_reply_before_print = printing_on
                 display_name = arguments.get("name") or arguments.get("title", "")
                 entity_type = ENTRY_ENTITY_TYPE.get(name, "")
                 await websocket.send_text(
