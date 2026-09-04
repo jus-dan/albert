@@ -248,7 +248,15 @@ h1 {
   border: 1px solid rgba(61, 220, 132, 0.35);
   color: var(--green);
   font-size: 0.82rem;
-  padding: 0.4rem 0.9rem;
-  border-radius: 999px;
+  padding: 0.5rem 0.9rem;
+  border-radius: 14px;
   text-align: center;
+}
+
+.entry-notice-link {
+  display: inline-block;
+  margin-top: 0.3rem;
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: underline;
 }

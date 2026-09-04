@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Wunschzettel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Quicksand:wght@500;600;700&display=swap">
+<style>
+  :root {
+    --sky-top: #f6d9c9;
+    --sky-bottom: #fbf3ea;
+    --ink: #5b3446;
+    --ink-soft: #8a5f6c;
+    --rose: #d97d82;
+    --gold: #c98a3f;
+    --line: #ecd9cd;
+    --page-bg: #faf3ec;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --page-bg: #1c1517; }
+  }
+  :root[data-theme="dark"] { --page-bg: #1c1517; }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--page-bg);
+    color: var(--ink);
+    font-family: "Quicksand", system-ui, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 40px 18px 56px;
+  }
+
+  .intro {
+    max-width: 560px;
+    text-align: center;
+  }
+
+  .intro .eyebrow {
+    font-weight: 700;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    color: var(--rose);
+  }
+
+  .intro h1 {
+    font-family: "Fraunces", Georgia, serif;
+    font-weight: 500;
+    font-size: clamp(1.5rem, 3vw, 1.9rem);
+    margin: 0.3em 0 0.25em;
+    text-wrap: balance;
+  }
+
+  .intro p {
+    margin: 0;
+    color: var(--ink-soft);
+    font-size: 0.92rem;
+    line-height: 1.55;
+  }
+
+  .actions {
+    display: flex;
+    gap: 10px;
+  }
+
+  .actions button {
+    font-family: "Quicksand", sans-serif;
+    font-weight: 700;
+    font-size: 0.85rem;
+    border: none;
+    border-radius: 999px;
+    padding: 0.6rem 1.3rem;
+    cursor: pointer;
+    background: var(--rose);
+    color: #fff8f2;
+  }
+
+  .actions button:hover { filter: brightness(1.06); }
+
+  /* --- the sheet itself: always the same warm paper look, any viewer theme --- */
+  .sheet {
+    width: min(100%, 210mm);
+    aspect-ratio: 210 / 297;
+    position: relative;
+    border-radius: 22px;
+    overflow: hidden;
+    background: linear-gradient(175deg, var(--sky-top) 0%, var(--sky-bottom) 52%);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.5) inset,
+      0 22px 44px -20px rgba(91, 52, 70, 0.35),
+      0 4px 14px -6px rgba(91, 52, 70, 0.2);
+    padding: 11mm 12mm 10mm;
+    display: flex;
+    flex-direction: column;
+    color: var(--ink);
+  }
+
+  .sun {
+    position: absolute;
+    top: -26mm;
+    right: -18mm;
+    width: 70mm;
+    height: 70mm;
+    border-radius: 50%;
+    background: radial-gradient(circle at 42% 42%, rgba(255,236,214,0.9), rgba(255,236,214,0) 70%);
+  }
+
+  .badge {
+    align-self: center;
+    width: 7mm;
+    height: 7mm;
+    border-radius: 50%;
+    background: var(--gold);
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.55);
+    margin-bottom: 5mm;
+  }
+
+  .heading {
+    text-align: center;
+  }
+
+  .heading .persona {
+    font-weight: 700;
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    color: var(--rose);
+  }
+
+  .heading h2 {
+    font-family: "Fraunces", Georgia, serif;
+    font-style: italic;
+    font-weight: 500;
+    font-size: 1.5rem;
+    margin: 0.15em 0 0;
+  }
+
+  .passage {
+    margin-top: 7mm;
+    font-family: "Fraunces", Georgia, serif;
+    font-size: 1.12rem;
+    line-height: 1.65;
+  }
+
+  .passage .lead {
+    font-style: italic;
+    color: var(--ink);
+  }
+
+  .passage .lead::before { content: "„"; }
+  .passage .lead::after { content: "“"; }
+
+  .passage .idea-label {
+    display: block;
+    margin-top: 5mm;
+    font-family: "Quicksand", sans-serif;
+    font-weight: 700;
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    color: var(--gold);
+  }
+
+  .passage .idea {
+    margin-top: 1.5mm;
+  }
+
+  .sketch {
+    margin-top: 6mm;
+    height: 42%;
+    max-height: 100mm;
+    border-radius: 16px;
+    border: 1.6px dashed var(--line);
+    background: rgba(255,255,255,0.35);
+    position: relative;
+  }
+
+  .sketch .sketch-label {
+    position: absolute;
+    left: 5mm;
+    bottom: 4mm;
+    font-size: 0.66rem;
+    color: var(--ink-soft);
+    letter-spacing: 0.03em;
+  }
+
+  .sketch svg {
+    position: absolute;
+    top: 5mm;
+    right: 6mm;
+    width: 13mm;
+    height: 13mm;
+    opacity: 0.35;
+  }
+
+  .sheet-foot {
+    margin-top: auto;
+    padding-top: 4mm;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 0.62rem;
+    color: var(--ink-soft);
+  }
+
+  .caption {
+    max-width: 560px;
+    text-align: center;
+    color: var(--ink-soft);
+    font-size: 0.82rem;
+    line-height: 1.6;
+  }
+
+  .caption b { color: var(--ink); font-weight: 700; }
+
+  @media print {
+    body { background: white; padding: 0; }
+    .intro, .actions, .caption { display: none; }
+    .sheet { box-shadow: none; border-radius: 0; width: 210mm; aspect-ratio: auto; height: 297mm; }
+  }
+</style>
+</head>
+<body>
+  <div class="intro">
+    <div class="eyebrow">Wunschzettel</div>
+    <h1 id="intro-title">Dein Wunsch zum Mitnehmen</h1>
+    <p id="intro-text">
+      Zum Ausdrucken und Mitnehmen — später direkt aus dem Gerät, sobald ein
+      Drucker angeschlossen ist. Bis dahin: unten auf "Drucken" tippen.
+    </p>
+  </div>
+
+  <div class="actions">
+    <button type="button" onclick="window.print()">Drucken</button>
+  </div>
+
+  <div class="sheet" aria-label="Wunschzettel">
+    <div class="sun" aria-hidden="true"></div>
+    <div class="badge" aria-hidden="true"></div>
+
+    <div class="heading">
+      <div class="persona" id="persona-label">Wunschmaschine</div>
+      <h2 id="idea-title">Ein Wunsch für hier</h2>
+    </div>
+
+    <div class="passage">
+      <span class="lead" id="wish-text">Weltfrieden</span>
+      <span class="idea-label">Und was das hier vor Ort bedeuten könnte</span>
+      <p class="idea" id="idea-text">
+        Ein gemeinsamer Nachbarschaftsgarten im Hinterhof, an dem alle
+        mitmachen können.
+      </p>
+    </div>
+
+    <div class="sketch" aria-label="Freiraum für eine Skizze">
+      <span class="sketch-label">Platz für eine Skizze</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="#5b3446" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 19l7-7 3 3-7 7-3-3z"/>
+        <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/>
+        <path d="M2 2l7.586 7.586"/>
+        <circle cx="11" cy="11" r="2"/>
+      </svg>
+    </div>
+
+    <div class="sheet-foot">
+      <span id="timestamp">—</span>
+      <span id="record-id">—</span>
+    </div>
+  </div>
+
+  <p class="caption" id="caption">
+    Beispielinhalt. Öffne diese Seite mit <code>?id=…</code>, um einen
+    echten, in der Wunschmaschine erfassten Wunsch anzuzeigen.
+  </p>
+
+  <script>
+    function formatTimestamp(iso) {
+      try {
+        const d = new Date(iso);
+        return d.toLocaleDateString("de-DE", { day: "numeric", month: "long", year: "numeric" })
+          + " · " + d.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }) + " Uhr";
+      } catch (err) {
+        return "";
+      }
+    }
+
+    function splitAbout(about) {
+      const marker = "Konkrete lokale Idee:";
+      const idx = about.indexOf(marker);
+      if (idx === -1) return { wish: about.trim(), idea: "" };
+      const wishPart = about.slice(0, idx).replace("Urspruenglicher Wunsch:", "").trim();
+      const ideaPart = about.slice(idx + marker.length).trim();
+      return { wish: wishPart, idea: ideaPart };
+    }
+
+    async function load() {
+      const params = new URLSearchParams(location.search);
+      const id = params.get("id");
+      if (!id) return;
+
+      try {
+        const resp = await fetch(`/api/wish/${id}`);
+        if (!resp.ok) throw new Error("not found");
+        const data = await resp.json();
+        const { wish, idea } = splitAbout(data.about || "");
+
+        document.getElementById("idea-title").textContent = data.name || "Ein Wunsch für hier";
+        document.getElementById("wish-text").textContent = wish || "—";
+        document.getElementById("idea-text").textContent = idea || "";
+        document.getElementById("timestamp").textContent = formatTimestamp(data.created_time);
+        document.getElementById("record-id").textContent = data.id || "";
+        document.getElementById("caption").hidden = true;
+        document.getElementById("intro-text").textContent =
+          "Zum Ausdrucken und Mitnehmen — später direkt aus dem Gerät, sobald ein Drucker angeschlossen ist.";
+      } catch (err) {
+        document.getElementById("caption").textContent =
+          "Dieser Wunsch konnte nicht geladen werden — es wird ein Beispiel gezeigt.";
+      }
+    }
+
+    load();
+  </script>
+</body>
+</html>

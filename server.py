@@ -63,6 +63,21 @@ async def api_board_delete(event_id: str):
     return {"status": "ok"}
 
 
+@app.get("/api/wish/{record_id}")
+async def api_wish(record_id: str):
+    try:
+        record = await airtable_client.get_record("_input_pipeline", record_id)
+    except Exception:
+        raise HTTPException(status_code=404, detail="Wunsch nicht gefunden.")
+    fields = record.get("fields", {})
+    return {
+        "id": record.get("id"),
+        "created_time": record.get("createdTime"),
+        "name": fields.get("name", ""),
+        "about": fields.get("about", ""),
+    }
+
+
 @app.websocket("/ws/{persona_id}")
 async def albert_socket(websocket: WebSocket, persona_id: str):
     await websocket.accept()
