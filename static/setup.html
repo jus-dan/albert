@@ -58,6 +58,32 @@
   #test-print-feedback { font-size: 0.85rem; margin: 0.4rem 0 0; color: var(--muted); }
   #test-print-feedback.ok { color: var(--green); }
   #test-print-feedback.error { color: var(--red); }
+  .voice-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.8rem;
+    padding: 0.5rem 0;
+    font-size: 0.95rem;
+  }
+  .voice-row + .voice-row { border-top: 1px solid var(--card-border); }
+  .voice-controls { display: flex; align-items: center; gap: 0.5rem; }
+  .voice-controls select { width: auto; min-width: 8rem; margin-top: 0; }
+  .voice-preview-button {
+    border: 1px solid var(--card-border);
+    border-radius: 999px;
+    padding: 0.35rem 0.8rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    background: transparent;
+    color: var(--text);
+    white-space: nowrap;
+  }
+  .voice-preview-button:hover { border-color: var(--accent); }
+  .voice-preview-button:disabled { opacity: 0.6; cursor: default; }
+  #voice-preview-hint { color: var(--red); }
+  #voice-preview-hint:empty { display: none; }
   #feedback { margin-top: 0.8rem; font-size: 0.9rem; color: var(--muted); }
   #feedback.ok { color: var(--green); }
   #feedback.error { color: var(--red); }
@@ -83,6 +109,33 @@
         Alex
       </label>
       <p class="hint">Mindestens eine Person muss ausgewählt bleiben.</p>
+    </fieldset>
+
+    <fieldset>
+      <legend>Stimmen</legend>
+      <div class="voice-row">
+        <label for="voice-albert">Albert</label>
+        <div class="voice-controls">
+          <select id="voice-albert" data-persona="albert"></select>
+          <button type="button" class="voice-preview-button" data-persona="albert">▶ Vorhören</button>
+        </div>
+      </div>
+      <div class="voice-row">
+        <label for="voice-albertine">Albertine</label>
+        <div class="voice-controls">
+          <select id="voice-albertine" data-persona="albertine"></select>
+          <button type="button" class="voice-preview-button" data-persona="albertine">▶ Vorhören</button>
+        </div>
+      </div>
+      <div class="voice-row">
+        <label for="voice-alex">Alex</label>
+        <div class="voice-controls">
+          <select id="voice-alex" data-persona="alex"></select>
+          <button type="button" class="voice-preview-button" data-persona="alex">▶ Vorhören</button>
+        </div>
+      </div>
+      <p class="hint" id="voice-preview-hint"></p>
+      <audio id="voice-preview-audio" hidden></audio>
     </fieldset>
 
     <fieldset>
@@ -150,6 +203,57 @@
     const testPrintFeedback = document.getElementById("test-print-feedback");
     const saveButton = document.getElementById("save-button");
     const feedback = document.getElementById("feedback");
+    const VOICE_SELECTS = document.querySelectorAll("select[data-persona]");
+    const voicePreviewHint = document.getElementById("voice-preview-hint");
+    const voicePreviewAudio = document.getElementById("voice-preview-audio");
+
+    async function loadVoices(selectedByPersona) {
+      try {
+        const resp = await fetch("/api/voices");
+        const data = await resp.json();
+        const voices = data.voices || [];
+        VOICE_SELECTS.forEach((select) => {
+          const persona = select.dataset.persona;
+          select.innerHTML = "";
+          voices.forEach((voice) => {
+            const opt = document.createElement("option");
+            opt.value = voice;
+            opt.textContent = voice.charAt(0).toUpperCase() + voice.slice(1);
+            select.appendChild(opt);
+          });
+          const current = (selectedByPersona || {})[persona];
+          if (current && voices.includes(current)) {
+            select.value = current;
+          }
+        });
+      } catch (err) {
+        voicePreviewHint.textContent = "Stimmen-Liste konnte nicht geladen werden.";
+      }
+    }
+
+    async function previewVoice(persona) {
+      const select = document.querySelector(`select[data-persona="${persona}"]`);
+      const button = document.querySelector(`.voice-preview-button[data-persona="${persona}"]`);
+      if (!select || !button) return;
+      voicePreviewHint.textContent = "";
+      button.disabled = true;
+      const originalLabel = button.textContent;
+      button.textContent = "⏳ …";
+      try {
+        voicePreviewAudio.pause();
+        voicePreviewAudio.src = `/api/voice-preview/${select.value}`;
+        await voicePreviewAudio.play();
+      } catch (err) {
+        voicePreviewHint.textContent = "Sprachvorschau fehlgeschlagen.";
+      } finally {
+        button.disabled = false;
+        button.textContent = originalLabel;
+      }
+    }
+
+    document.querySelectorAll(".voice-preview-button").forEach((button) => {
+      button.addEventListener("click", () => previewVoice(button.dataset.persona));
+    });
 
     async function loadPrinters(selected) {
       try {
@@ -187,6 +291,7 @@
         printingCheckbox.checked = !!data.printing_enabled;
         boardLimitInput.value = data.board_item_limit || 15;
         await loadPrinters(data.selected_printer || "");
+        await loadVoices(data.persona_voices || {});
       } catch (err) {
         feedback.hidden = false;
         feedback.textContent = "Einstellungen konnten nicht geladen werden.";
@@ -210,6 +315,10 @@
       const printing_enabled = printingCheckbox.checked;
       const selected_printer = printerSelect.value;
       const board_item_limit = parseInt(boardLimitInput.value, 10) || 15;
+      const persona_voices = {};
+      VOICE_SELECTS.forEach((select) => {
+        persona_voices[select.dataset.persona] = select.value;
+      });
 
       try {
         const resp = await fetch("/api/settings", {
@@ -222,6 +331,7 @@
             printing_enabled,
             selected_printer,
             board_item_limit,
+            persona_voices,
           }),
         });
         feedback.hidden = false;
@@ -280,6 +390,8 @@
 
   <footer id="version-footer" class="version-footer">
     <a href="/setup.html">Einstellungen</a>
+    &nbsp;·&nbsp;
+    <a href="/board.html">Themen-Board</a>
     &nbsp;·&nbsp;
     <a href="https://github.com/jus-dan/albert" target="_blank" rel="noopener" id="version-text"></a>
   </footer>

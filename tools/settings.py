@@ -3,6 +3,13 @@ from pathlib import Path
 
 SETTINGS_FILE = Path(__file__).resolve().parent.parent / "data" / "settings.json"
 
+# Von der Realtime API (gpt-realtime) unterstuetzte Stimmen. "cedar" und
+# "marin" sind laut OpenAI-Doku die neuesten/natuerlichsten.
+VALID_VOICES = [
+    "alloy", "ash", "ballad", "cedar", "coral",
+    "echo", "marin", "sage", "shimmer", "verse",
+]
+
 DEFAULT_SETTINGS = {
     "enabled_personas": ["albert", "albertine", "alex"],
     "interaction_mode": "vad",  # "vad" (freihaendig) oder "push_to_talk" (Leertaste)
@@ -10,6 +17,7 @@ DEFAULT_SETTINGS = {
     "printing_enabled": False,
     "selected_printer": "",  # leer = kein Drucker ausgewaehlt
     "board_item_limit": 15,  # neueste N Challenges bzw. N Wuensche auf dem Themen-Board
+    "persona_voices": {"albert": "cedar", "albertine": "sage", "alex": "alloy"},
 }
 
 
