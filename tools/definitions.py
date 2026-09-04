@@ -46,12 +46,41 @@ TOOLS = [
     },
     {
         "type": "function",
+        "name": "submit_challenge",
+        "description": (
+            "Erfasst ein Anliegen oder eine Beobachtung, die die Person "
+            "beschaeftigt (kein Wunsch), zur spaeteren Pruefung durch das "
+            "Team -- damit sichtbar wird, was die Leute gerade umtreibt. "
+            "Nutze dies, wenn die Person kein Zukunftswunsch, sondern eine "
+            "Sorge, ein Problem oder eine Beobachtung teilt."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "title": {
+                    "type": "string",
+                    "description": "Kurzer, praegnanter Titel fuer das Anliegen.",
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Was die Person beschaeftigt oder beobachtet hat, so wie sie es erzaehlt hat.",
+                },
+                "contact_name": {
+                    "type": "string",
+                    "description": "Name der Person, falls freiwillig genannt (optional).",
+                },
+            },
+            "required": ["title", "description"],
+        },
+    },
+    {
+        "type": "function",
         "name": "save_contact_email",
         "description": (
             "Speichert die E-Mail-Adresse der Person beim zuletzt erfassten "
-            "Wunsch, damit sie auf dem Laufenden bleibt und spaeter einen "
-            "Ausdruck bekommt. Nur aufrufen, wenn die Person das moechte und "
-            "vorher mindestens ein Wunsch erfasst wurde."
+            "Eintrag (Wunsch oder Anliegen), damit sie auf dem Laufenden "
+            "bleibt und spaeter einen Ausdruck bekommt. Nur aufrufen, wenn "
+            "die Person das moechte und vorher schon etwas erfasst wurde."
         ),
         "parameters": {
             "type": "object",
@@ -109,6 +138,24 @@ async def dispatch(name: str, arguments: dict) -> str:
             website="",
             raw_text=about,
             challenge_framing="future_wish",
+        )
+        contact_name = arguments.get("contact_name", "")
+        events.log_event("contribution", "future_wish", f"{title}" + (f" ({contact_name})" if contact_name else ""))
+        return json.dumps(
+            {"status": "ok", "table": result["table"], "record_id": result["record_id"]}
+        )
+
+    if name == "submit_challenge":
+        title = arguments.get("title", "")
+        description = arguments.get("description", "")
+        result = await airtable_client.submit_contribution(
+            entity_type="challenge",
+            name=title,
+            about=description,
+            contact_email="",
+            website="",
+            raw_text=description,
+            challenge_framing="challenge",
         )
         contact_name = arguments.get("contact_name", "")
         events.log_event("contribution", "challenge", f"{title}" + (f" ({contact_name})" if contact_name else ""))

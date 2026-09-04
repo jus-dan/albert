@@ -102,19 +102,24 @@ async def albert_socket(websocket: WebSocket, persona_id: str):
     def send_user_transcript(transcript: str):
         asyncio.create_task(websocket.send_text(json.dumps({"type": "user_message", "text": transcript})))
 
-    last_wish_record_id = None
+    last_record_id = None
+
+    ENTRY_ENTITY_TYPE = {
+        "submit_wish": "future_wish",
+        "submit_challenge": "challenge",
+    }
 
     async def handle_tool_call(name: str, arguments: dict) -> str:
-        nonlocal last_wish_record_id
+        nonlocal last_record_id
         logger.info("Tool-Aufruf: %s(%s)", name, arguments)
 
         if name == "save_contact_email":
-            if not last_wish_record_id:
-                return json.dumps({"error": "Noch kein Wunsch erfasst."})
+            if not last_record_id:
+                return json.dumps({"error": "Noch nichts erfasst."})
             try:
                 await airtable_client.update_record(
                     "_input_pipeline",
-                    last_wish_record_id,
+                    last_record_id,
                     {"contact_email": arguments.get("email", "")},
                 )
                 return json.dumps({"status": "ok"})
@@ -124,16 +129,16 @@ async def albert_socket(websocket: WebSocket, persona_id: str):
 
         result = await dispatch_tool(name, arguments)
 
-        if name in ("submit_contribution", "submit_wish"):
+        if name in ("submit_contribution", "submit_wish", "submit_challenge"):
             try:
                 parsed = json.loads(result)
             except json.JSONDecodeError:
                 parsed = {}
             if parsed.get("status") == "ok":
-                if name == "submit_wish":
-                    last_wish_record_id = parsed.get("record_id")
+                if name in ("submit_wish", "submit_challenge"):
+                    last_record_id = parsed.get("record_id")
                 display_name = arguments.get("name") or arguments.get("title", "")
-                entity_type = arguments.get("entity_type") or ("challenge" if name == "submit_wish" else "")
+                entity_type = arguments.get("entity_type") or ENTRY_ENTITY_TYPE.get(name, "")
                 await websocket.send_text(
                     json.dumps(
                         {

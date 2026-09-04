@@ -8,20 +8,17 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Quicksand:wght@500;600;700&display=swap">
 <style>
   :root {
-    --sky-top: #f6d9c9;
-    --sky-bottom: #fbf3ea;
-    --ink: #5b3446;
-    --ink-soft: #8a5f6c;
-    --rose: #d97d82;
-    --gold: #c98a3f;
-    --line: #ecd9cd;
-    --page-bg: #faf3ec;
+    --paper: #f8f7f5;
+    --ink: #1c1c1c;
+    --ink-soft: #6b6b6b;
+    --line: #d9d7d2;
+    --page-bg: #efeeec;
   }
 
   @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) { --page-bg: #1c1517; }
+    :root:not([data-theme="light"]) { --page-bg: #17171a; }
   }
-  :root[data-theme="dark"] { --page-bg: #1c1517; }
+  :root[data-theme="dark"] { --page-bg: #17171a; }
 
   * { box-sizing: border-box; }
 
@@ -47,7 +44,7 @@
     font-weight: 700;
     font-size: 0.75rem;
     letter-spacing: 0.08em;
-    color: var(--rose);
+    color: var(--ink-soft);
   }
 
   .intro h1 {
@@ -78,71 +75,78 @@
     border-radius: 999px;
     padding: 0.6rem 1.3rem;
     cursor: pointer;
-    background: var(--rose);
-    color: #fff8f2;
+    background: var(--ink);
+    color: var(--paper);
   }
 
-  .actions button:hover { filter: brightness(1.06); }
+  .actions button:hover { filter: brightness(1.2); }
 
-  /* --- the sheet itself: always the same warm paper look, any viewer theme --- */
+  /* --- the sheet itself: always the same paper look, print-safe grayscale --- */
   .sheet {
     width: min(100%, 210mm);
     aspect-ratio: 210 / 297;
     position: relative;
-    border-radius: 22px;
+    border-radius: 14px;
     overflow: hidden;
-    background: linear-gradient(175deg, var(--sky-top) 0%, var(--sky-bottom) 52%);
+    background: var(--paper);
     box-shadow:
       0 1px 0 rgba(255,255,255,0.5) inset,
-      0 22px 44px -20px rgba(91, 52, 70, 0.35),
-      0 4px 14px -6px rgba(91, 52, 70, 0.2);
+      0 22px 44px -20px rgba(0,0,0,0.25),
+      0 4px 14px -6px rgba(0,0,0,0.15);
     padding: 11mm 12mm 10mm;
     display: flex;
     flex-direction: column;
     color: var(--ink);
   }
 
-  .sun {
+  .glow {
     position: absolute;
-    top: -26mm;
-    right: -18mm;
-    width: 70mm;
-    height: 70mm;
+    top: -30mm;
+    right: -22mm;
+    width: 80mm;
+    height: 80mm;
     border-radius: 50%;
-    background: radial-gradient(circle at 42% 42%, rgba(255,236,214,0.9), rgba(255,236,214,0) 70%);
+    background: radial-gradient(circle at 42% 42%, rgba(0,0,0,0.05), rgba(0,0,0,0) 70%);
   }
 
-  .badge {
-    align-self: center;
-    width: 7mm;
-    height: 7mm;
-    border-radius: 50%;
-    background: var(--gold);
-    box-shadow: 0 0 0 3px rgba(255,255,255,0.55);
-    margin-bottom: 5mm;
+  .brand {
+    text-align: center;
+    font-family: "Quicksand", sans-serif;
+    font-weight: 700;
+    font-size: 2rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    line-height: 1;
   }
 
   .heading {
     text-align: center;
+    margin-top: 2mm;
   }
 
   .heading .persona {
-    font-weight: 700;
-    font-size: 0.72rem;
-    letter-spacing: 0.06em;
-    color: var(--rose);
+    font-weight: 600;
+    font-size: 0.78rem;
+    letter-spacing: 0.03em;
+    color: var(--ink-soft);
   }
 
   .heading h2 {
     font-family: "Fraunces", Georgia, serif;
     font-style: italic;
     font-weight: 500;
-    font-size: 1.5rem;
-    margin: 0.15em 0 0;
+    font-size: 1.3rem;
+    margin: 0.2em 0 0;
+  }
+
+  .rule {
+    border: none;
+    border-top: 1.4px solid var(--ink);
+    margin: 4mm 0 0;
   }
 
   .passage {
-    margin-top: 7mm;
+    margin-top: 6mm;
     font-family: "Fraunces", Georgia, serif;
     font-size: 1.12rem;
     line-height: 1.65;
@@ -163,7 +167,7 @@
     font-weight: 700;
     font-size: 0.68rem;
     letter-spacing: 0.08em;
-    color: var(--gold);
+    color: var(--ink-soft);
   }
 
   .passage .idea {
@@ -172,11 +176,11 @@
 
   .sketch {
     margin-top: 6mm;
-    height: 42%;
-    max-height: 100mm;
-    border-radius: 16px;
+    height: 40%;
+    max-height: 95mm;
+    border-radius: 10px;
     border: 1.6px dashed var(--line);
-    background: rgba(255,255,255,0.35);
+    background: rgba(0,0,0,0.015);
     position: relative;
   }
 
@@ -203,11 +207,19 @@
   .sheet-foot {
     margin-top: auto;
     padding-top: 4mm;
+    border-top: 1px solid var(--line);
     display: flex;
     justify-content: space-between;
     align-items: baseline;
-    font-size: 0.62rem;
+    font-size: 0.68rem;
     color: var(--ink-soft);
+  }
+
+  .sheet-foot .id {
+    font-family: "Quicksand", sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: var(--ink);
   }
 
   .caption {
@@ -221,7 +233,7 @@
   .caption b { color: var(--ink); font-weight: 700; }
 
   @media print {
-    body { background: white; padding: 0; }
+    body { background: white; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .intro, .actions, .caption { display: none; }
     .sheet { box-shadow: none; border-radius: 0; width: 210mm; aspect-ratio: auto; height: 297mm; }
   }
@@ -242,13 +254,16 @@
   </div>
 
   <div class="sheet" aria-label="Wunschzettel">
-    <div class="sun" aria-hidden="true"></div>
-    <div class="badge" aria-hidden="true"></div>
+    <div class="glow" aria-hidden="true"></div>
+
+    <div class="brand">Wunschmaschine</div>
 
     <div class="heading">
-      <div class="persona" id="persona-label">Wunschmaschine</div>
+      <div class="persona" id="persona-label">Im Gespräch erfasst</div>
       <h2 id="idea-title">Ein Wunsch für hier</h2>
     </div>
+
+    <hr class="rule" />
 
     <div class="passage">
       <span class="lead" id="wish-text">Weltfrieden</span>
@@ -261,7 +276,7 @@
 
     <div class="sketch" aria-label="Freiraum für eine Skizze">
       <span class="sketch-label">Platz für eine Skizze</span>
-      <svg viewBox="0 0 24 24" fill="none" stroke="#5b3446" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#1c1c1c" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M12 19l7-7 3 3-7 7-3-3z"/>
         <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/>
         <path d="M2 2l7.586 7.586"/>
@@ -271,7 +286,7 @@
 
     <div class="sheet-foot">
       <span id="timestamp">—</span>
-      <span id="record-id">—</span>
+      <span class="id">ID <span id="record-id">—</span></span>
     </div>
   </div>
 

@@ -79,7 +79,8 @@ const ENTITY_TYPE_LABELS = {
   initiative: "Initiative",
   organization: "Organisation",
   person: "Person",
-  challenge: "Zukunftswunsch",
+  future_wish: "Zukunftswunsch",
+  challenge: "Challenge",
 };
 
 function addEntryNotice(message) {
@@ -88,7 +89,7 @@ function addEntryNotice(message) {
   const typeLabel = ENTITY_TYPE_LABELS[message.entity_type] || message.entity_type;
   notice.textContent = `Neuer Eintrag erfasst: "${message.name}" (${typeLabel}) — Tabelle ${message.table}, ID ${message.record_id}`;
 
-  if (message.entity_type === "challenge" && message.record_id) {
+  if (message.entity_type === "future_wish" && message.record_id) {
     const link = document.createElement("a");
     link.href = `/wunschzettel.html?id=${encodeURIComponent(message.record_id)}`;
     link.target = "_blank";
