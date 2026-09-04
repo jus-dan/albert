@@ -61,8 +61,6 @@ Der Status-Badge oben zeigt jederzeit, ob die Verbindung aktiv ist.
 - **`/board.html`** — Themen-Board für einen zweiten Monitor: zeigt live,
   wonach gesucht wurde und was neu erfasst wurde, als verschiebbare Post-its.
   Rechtsklick auf eine Notiz zum Löschen.
-- **`/debug.html`** — testet die Airtable-Suche direkt, ohne Sprachaufnahme
-  (zeigt Treffer, verwendete Formel, Obergrenze).
 
 ## Airtable-Anbindung
 

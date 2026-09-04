@@ -73,36 +73,27 @@ TOOLS = [
             "required": ["title", "description"],
         },
     },
+    {
+        "type": "function",
+        "name": "confirm_print",
+        "description": (
+            "Zeigt im Chat einen Link zum Ausdrucken des zuletzt erfassten "
+            "Wunsches an. Nur aufrufen, NACHDEM die Person auf deine "
+            "gesprochene Frage 'Moechtest du deinen Wunsch ausdrucken und "
+            "ans Board haengen?' mit Ja geantwortet hat. Gilt nur fuer "
+            "Wuensche -- fuer Anliegen/Challenges nie aufrufen, die werden "
+            "nicht ausgedruckt."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {},
+            "required": [],
+        },
+    },
 ]
 
 
 async def dispatch(name: str, arguments: dict) -> str:
-    if name == "list_entities":
-        query = arguments.get("query", "")
-        results = await airtable_client.search_all_entities(query=query)
-        events.log_event("search", "all", query or "(alle)")
-        if not results:
-            return json.dumps({"count": 0, "results": []})
-        return json.dumps({"count": len(results), "results": results})
-
-    if name == "submit_contribution":
-        result = await airtable_client.submit_contribution(
-            entity_type=arguments.get("entity_type", ""),
-            name=arguments.get("name", ""),
-            about=arguments.get("about", ""),
-            contact_email=arguments.get("contact_email", ""),
-            website=arguments.get("website", ""),
-            raw_text=arguments.get("about", ""),
-            event_location=arguments.get("event_location", ""),
-            start_date_time=arguments.get("start_date_time", ""),
-            end_date_time=arguments.get("end_date_time", ""),
-            challenge_framing=arguments.get("challenge_framing", ""),
-        )
-        events.log_event("contribution", arguments.get("entity_type", ""), arguments.get("name", ""))
-        return json.dumps(
-            {"status": "ok", "table": result["table"], "record_id": result["record_id"]}
-        )
-
     if name == "submit_wish":
         title = arguments.get("title", "")
         original_wish = arguments.get("original_wish", "")

@@ -89,28 +89,17 @@ function addEntryNotice(message) {
   const typeLabel = ENTITY_TYPE_LABELS[message.entity_type] || message.entity_type;
   notice.textContent = `Neuer Eintrag erfasst: "${message.name}" (${typeLabel})`;
   chatLog.appendChild(notice);
+  chatLog.scrollTop = chatLog.scrollHeight;
+}
 
-  if (message.record_id) {
-    const printCard = document.createElement("div");
-    printCard.className = "print-card";
-
-    const printPrompt = document.createElement("p");
-    printPrompt.className = "print-card-prompt";
-    printPrompt.textContent = "Möchtest du deine Idee ausdrucken und ans Board hängen?";
-    printCard.appendChild(printPrompt);
-
-    const printButton = document.createElement("button");
-    printButton.type = "button";
-    printButton.className = "print-card-button";
-    printButton.textContent = "🖨️ Jetzt ausdrucken";
-    printButton.addEventListener("click", () => {
-      window.open(`/wunschzettel.html?id=${encodeURIComponent(message.record_id)}`, "_blank", "noopener");
-    });
-    printCard.appendChild(printButton);
-
-    chatLog.appendChild(printCard);
-  }
-
+function addPrintLink(recordId) {
+  const link = document.createElement("a");
+  link.href = `/wunschzettel.html?id=${encodeURIComponent(recordId)}`;
+  link.target = "_blank";
+  link.rel = "noopener";
+  link.className = "print-link";
+  link.textContent = "🖨️ Wunschzettel ansehen & ausdrucken";
+  chatLog.appendChild(link);
   chatLog.scrollTop = chatLog.scrollHeight;
 }
 
@@ -211,6 +200,8 @@ function connectSocket(personaId) {
       }
     } else if (message.type === "new_entry") {
       addEntryNotice(message);
+    } else if (message.type === "print_link") {
+      addPrintLink(message.record_id);
     } else if (message.type === "error") {
       setStatus("error", message.message || "Fehler");
     }

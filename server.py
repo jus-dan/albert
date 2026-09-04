@@ -50,11 +50,6 @@ async def api_version():
     return {"version": APP_VERSION}
 
 
-@app.get("/api/search")
-async def api_search(entity_type: str, query: str = ""):
-    return await airtable_client.search_debug(entity_type, query)
-
-
 @app.get("/api/board")
 async def api_board():
     return {
@@ -114,19 +109,32 @@ async def albert_socket(websocket: WebSocket, persona_id: str):
         "submit_challenge": "challenge",
     }
 
+    last_wish_record_id = None
+
     async def handle_tool_call(name: str, arguments: dict) -> str:
+        nonlocal last_wish_record_id
         logger.info("Tool-Aufruf: %s(%s)", name, arguments)
+
+        if name == "confirm_print":
+            if not last_wish_record_id:
+                return json.dumps({"error": "Kein Wunsch zum Ausdrucken vorhanden."})
+            await websocket.send_text(
+                json.dumps({"type": "print_link", "record_id": last_wish_record_id})
+            )
+            return json.dumps({"status": "ok"})
 
         result = await dispatch_tool(name, arguments)
 
-        if name in ("submit_contribution", "submit_wish", "submit_challenge"):
+        if name in ("submit_wish", "submit_challenge"):
             try:
                 parsed = json.loads(result)
             except json.JSONDecodeError:
                 parsed = {}
             if parsed.get("status") == "ok":
+                if name == "submit_wish":
+                    last_wish_record_id = parsed.get("record_id")
                 display_name = arguments.get("name") or arguments.get("title", "")
-                entity_type = arguments.get("entity_type") or ENTRY_ENTITY_TYPE.get(name, "")
+                entity_type = ENTRY_ENTITY_TYPE.get(name, "")
                 await websocket.send_text(
                     json.dumps(
                         {
