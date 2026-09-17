@@ -67,14 +67,17 @@ TOOL_MECHANICS = (
 
 END_CONVERSATION_TEXT = (
     "\n\nSobald das Gespräch zu einem natürlichen Ende kommt (die Person "
-    "hat nichts mehr, worüber sie reden möchte, und du hast dich bereits "
-    "verabschiedet, z.B. mit 'einen schönen Tag noch'), rufe SOFORT im "
-    "selben Atemzug wie diesen Abschiedssatz das Tool 'end_conversation' "
-    "auf -- das beendet das Gespräch technisch und bringt das Gerät "
-    "zurück zur Startseite für die nächste Person. Rufe es NIE auf, "
-    "bevor du dich verabschiedet hast, und NIE, solange noch etwas offen "
-    "ist oder die Person gerade erst gefragt wurde, ob es noch etwas "
-    "gibt."
+    "hat nichts mehr, worüber sie reden möchte), ist ein richtiger "
+    "Abschied Pflicht, bevor irgendetwas technisch beendet wird -- kein "
+    "knappes 'Tschüss'. Bedanke dich in eigenen Worten fürs Gespräch, "
+    "wünsche etwas Freundliches (z.B. einen schönen Tag), UND erwähne "
+    "kurz, dass der Bildschirm jetzt für die nächste Person zurückgesetzt "
+    "wird. Rufe ERST DANACH, im selben Atemzug wie das Ende dieses "
+    "Abschieds, das Tool 'end_conversation' auf -- das beendet das "
+    "Gespräch technisch und bringt das Gerät zurück zur Startseite. Rufe "
+    "es NIE auf, bevor der komplette Abschied ausgesprochen wurde, und "
+    "NIE, solange noch etwas offen ist oder die Person gerade erst "
+    "gefragt wurde, ob es noch etwas gibt."
 )
 
 PRINTING_ENABLED_TEXT = (
