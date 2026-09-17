@@ -89,6 +89,18 @@ Einstellungen und zeigt die laufende Version.
   einstellbar). Rechtsklick auf eine Notiz markiert sie in Airtable als
   "rejected" (kein echtes Löschen, sondern der normale Team-Workflow).
 
+### Themen-Board auf einem zweiten Rechner
+
+Das Board holt seine Daten direkt aus Airtable (nicht aus etwas Lokalem)
+und fragt alle 15 Sekunden nach — ein zweiter Rechner braucht also keine
+Netzwerkverbindung zum ersten. Einfach eine eigene, unabhängige
+Albert-Installation aufsetzen (Ordner kopieren oder Repo klonen,
+`Albert-starten.bat` starten, `.env` ausfüllen) und dort statt der
+Startseite `http://127.0.0.1:8000/board.html` öffnen. Für die reine
+Board-Anzeige reicht ein Platzhalter bei `OPENAI_API_KEY` — der wird erst
+für echte Gespräche gebraucht — solange `AIRTABLE_API_TOKEN` Zugriff auf
+dieselbe Base hat.
+
 ## Drucken
 
 Ist in den Einstellungen ein Drucker ausgewählt und Drucken aktiviert, kann
@@ -133,6 +145,10 @@ Hinweis: Beide Varianten benoetigen Zugriff auf Mikrofon und Lautsprecher
 
 Wird bei jedem Tag aktualisiert.
 
+- **v1.2.4** — README dokumentiert, wie man das Themen-Board auf einem
+  zweiten Rechner anzeigt (eigene, unabhaengige Albert-Installation, da
+  das Board direkt aus Airtable liest -- keine Netzwerkverbindung
+  zwischen den Rechnern noetig).
 - **v1.2.3** — Airtable-Base auf "HSG-SSI-ecosystem (DEV_v2)" umgestellt.
   Die Base-ID ist kein Geheimnis (nur der Zugriffstoken ist einer) und
   lebt deshalb jetzt in `config.py` statt in der gitignoreten `.env` --
