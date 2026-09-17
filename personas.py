@@ -27,10 +27,12 @@ def greeting_instructions(push_to_talk: bool) -> str:
 def farewell_instructions() -> str:
     return (
         "Das Gespräch ist jetzt zu Ende. Verabschiede dich jetzt in der "
-        "Sprache, in der ihr bisher gesprochen habt -- bedanke dich in "
-        "eigenen Worten fürs Gespräch, wünsche etwas Freundliches (z.B. "
-        "einen schönen Tag), und erwähne kurz, dass der Bildschirm jetzt "
-        "für die nächste Person zurückgesetzt wird. Sag NUR diesen "
+        "Sprache, in der ihr bisher gesprochen habt -- alle drei Teile "
+        "gehören dazu, keiner darf fehlen: (1) bedanke dich in eigenen "
+        "Worten fürs Gespräch, (2) erwähne, dass ihr den Chatverlauf "
+        "jetzt löscht und der Bildschirm für die nächste Person "
+        "zurückgesetzt wird, (3) wünsche zum Schluss etwas Freundliches "
+        "(z.B. einen schönen Tag, viel Spass noch). Sag NUR diesen "
         "Abschied, kurz und warm -- keine Rückfragen, keine weiteren "
         "Themen, keinen Tool-Aufruf."
     )
