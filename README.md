@@ -37,7 +37,8 @@ bereits installiert sein, den Rest erledigt das Skript.
    ```
 
 2. `.env.example` zu `.env` kopieren und die eigenen Zugangsdaten eintragen
-   (`OPENAI_API_KEY`, `AIRTABLE_API_TOKEN`, `AIRTABLE_BASE_ID`):
+   (`OPENAI_API_KEY`, `AIRTABLE_API_TOKEN`) -- die Airtable-Base selbst ist
+   fest in `config.py` hinterlegt, nicht geheim, und ueber Git ausgerollt:
 
    ```bash
    copy .env.example .env
@@ -132,6 +133,12 @@ Hinweis: Beide Varianten benoetigen Zugriff auf Mikrofon und Lautsprecher
 
 Wird bei jedem Tag aktualisiert.
 
+- **v1.2.3** — Airtable-Base auf "HSG-SSI-ecosystem (DEV_v2)" umgestellt.
+  Die Base-ID ist kein Geheimnis (nur der Zugriffstoken ist einer) und
+  lebt deshalb jetzt in `config.py` statt in der gitignoreten `.env` --
+  ein kuenftiger Wechsel rollt damit automatisch per Tag an alle
+  Geraete aus, ohne dass jedes Geraet einzeln in `.env` angepasst
+  werden muss.
 - **v1.2.2** — Kritischen Self-Modifying-Script-Bug im Start-Skript
   behoben: ein Versionswechsel per `git checkout` konnte die gerade
   laufende `Albert-starten.bat` mitten in der Ausfuehrung veraendern und

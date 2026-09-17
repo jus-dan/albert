@@ -2,8 +2,9 @@ import os
 
 import httpx
 
+from config import AIRTABLE_BASE_ID
+
 AIRTABLE_API_TOKEN = os.getenv("AIRTABLE_API_TOKEN")
-AIRTABLE_BASE_ID = os.getenv("AIRTABLE_BASE_ID")
 
 BASE_URL = f"https://api.airtable.com/v0/{AIRTABLE_BASE_ID}"
 
