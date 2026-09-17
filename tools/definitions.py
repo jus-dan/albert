@@ -102,6 +102,25 @@ CONFIRM_PRINT_TOOL = {
     },
 }
 
+END_CONVERSATION_TOOL = {
+    "type": "function",
+    "name": "end_conversation",
+    "description": (
+        "Signalisiert, dass sich das Gespraech dem Ende zugeht. Rufe dies "
+        "IMMER im selben Atemzug wie deinen Abschiedssatz auf (z.B. "
+        "'einen schoenen Tag noch'), NIE davor -- sag zuerst deinen "
+        "Abschied, rufe DANN dieses Tool auf, in derselben Antwort. Nie "
+        "aufrufen, solange noch ein offenes Thema besteht oder die Person "
+        "gerade erst gefragt wurde, ob es noch etwas gibt und noch nicht "
+        "geantwortet hat."
+    ),
+    "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+    },
+}
+
 
 async def dispatch(name: str, arguments: dict) -> str:
     if name == "submit_wish":

@@ -31,21 +31,46 @@ let pendingUserBubbles = [];
 let currentAssistantBubble = null;
 let currentReveal = null;
 let sentChunkCount = 0;
+let conversationEnding = false;
+let pendingAutoReturn = false;
+let autoReturnFallback = null;
 
 const REVEAL_CHARS_PER_SEC = 24;
 
 setInterval(() => {
-  if (!currentReveal) return;
-  const elapsedSec = (performance.now() - currentReveal.startedAt) / 1000;
-  const target = Math.min(currentReveal.fullText.length, Math.floor(elapsedSec * REVEAL_CHARS_PER_SEC));
-  if (target > currentReveal.revealed) {
-    currentReveal.revealed = target;
-    if (currentReveal.bubble.isConnected) {
-      currentReveal.bubble.textContent = currentReveal.fullText.slice(0, target);
-      chatLog.scrollTop = chatLog.scrollHeight;
+  if (currentReveal) {
+    const elapsedSec = (performance.now() - currentReveal.startedAt) / 1000;
+    const target = Math.min(currentReveal.fullText.length, Math.floor(elapsedSec * REVEAL_CHARS_PER_SEC));
+    if (target > currentReveal.revealed) {
+      currentReveal.revealed = target;
+      if (currentReveal.bubble.isConnected) {
+        currentReveal.bubble.textContent = currentReveal.fullText.slice(0, target);
+        chatLog.scrollTop = chatLog.scrollHeight;
+      }
     }
   }
+  maybeAutoReturn();
 }, 50);
+
+function maybeAutoReturn() {
+  if (!pendingAutoReturn) return;
+  const audioIdle = activeSources.length === 0 && (!audioContext || audioContext.currentTime >= playhead - 0.05);
+  if (!audioIdle) return;
+  pendingAutoReturn = false;
+  conversationEnding = false;
+  if (autoReturnFallback) {
+    clearTimeout(autoReturnFallback);
+    autoReturnFallback = null;
+  }
+  setTimeout(returnToStart, 1200);
+}
+
+function returnToStart() {
+  stopSession();
+  currentPersonaId = null;
+  conversation.hidden = true;
+  personaSelect.hidden = false;
+}
 
 function setStatus(state, text) {
   statusBadge.className = `status status-${state}`;
@@ -244,6 +269,18 @@ function connectSocket(personaId) {
     } else if (message.type === "user_speaking") {
       stopPlaybackForBargeIn();
       pendingUserBubbles.push(addMessage("user", "…"));
+    } else if (message.type === "conversation_ended") {
+      conversationEnding = true;
+      if (autoReturnFallback) clearTimeout(autoReturnFallback);
+      autoReturnFallback = setTimeout(() => {
+        conversationEnding = false;
+        returnToStart();
+      }, 15000);
+    } else if (message.type === "assistant_done") {
+      if (conversationEnding) {
+        pendingAutoReturn = true;
+        maybeAutoReturn();
+      }
     } else if (message.type === "error") {
       setStatus("error", message.message || "Fehler");
     }
@@ -336,6 +373,12 @@ async function startSession() {
   currentAssistantBubble = null;
   currentReveal = null;
   pendingUserBubbles = [];
+  conversationEnding = false;
+  pendingAutoReturn = false;
+  if (autoReturnFallback) {
+    clearTimeout(autoReturnFallback);
+    autoReturnFallback = null;
+  }
 
   connectSocket(currentPersonaId);
   setupMic();
@@ -350,6 +393,12 @@ function stopSession() {
   micIndicator.hidden = true;
   audioDebug.hidden = true;
   flushReveal();
+  conversationEnding = false;
+  pendingAutoReturn = false;
+  if (autoReturnFallback) {
+    clearTimeout(autoReturnFallback);
+    autoReturnFallback = null;
+  }
 
   if (socket) {
     socket.close();
@@ -410,12 +459,7 @@ toggleButton.addEventListener("click", () => {
   }
 });
 
-backButton.addEventListener("click", () => {
-  stopSession();
-  currentPersonaId = null;
-  conversation.hidden = true;
-  personaSelect.hidden = false;
-});
+backButton.addEventListener("click", returnToStart);
 
 document.addEventListener("keydown", (event) => {
   if (interactionMode !== "push_to_talk") return;

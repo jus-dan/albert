@@ -2,11 +2,11 @@ from dataclasses import dataclass
 from pathlib import Path
 
 GREETING_VAD = (
-    "Hallo, da bin ich. Du kannst einfach drauflos reden, ich höre dir zu."
+    "Hey, schön bist du da! Du kannst einfach drauflos reden, ich höre dir zu."
 )
 
 GREETING_PUSH_TO_TALK = (
-    "Hallo, da bin ich. Wenn du mit mir reden willst, halte die Leertaste "
+    "Hey, schön bist du da! Wenn du mit mir reden willst, halte die Leertaste "
     "gedrückt, solange du sprichst, und lass sie los, wenn du von mir eine "
     "Antwort haben möchtest."
 )
@@ -16,9 +16,11 @@ def greeting_instructions(push_to_talk: bool) -> str:
     greeting = GREETING_PUSH_TO_TALK if push_to_talk else GREETING_VAD
     return (
         f'Sage zuerst exakt und ohne jede Änderung genau diesen Satz: "{greeting}" '
-        "Frage direkt im Anschluss kurz, ob es einen Zukunftswunsch gibt -- oder "
-        "ob die Person gerade etwas beschäftigt oder sie etwas beobachtet hat, "
-        "worüber sie reden möchte."
+        "Frage direkt im Anschluss locker und offen, ob sie über etwas reden "
+        "möchte -- z.B. ob ihr gerade ein Zukunftswunsch durch den Kopf geht "
+        "oder ihr etwas aufgefallen ist, das sie loswerden möchte. Keine "
+        "steife Aufzählung von Optionen, sondern eine einzige, natürliche "
+        "Einladung zum Reden."
     )
 
 BEHAVIOR_FILE = Path(__file__).resolve().parent / "persona_behavior.md"
@@ -61,6 +63,18 @@ TOOL_MECHANICS = (
     "\n\n"
     "Erfasste Einträge werden zur Prüfung durch das Team gesammelt, "
     "erscheinen also nicht sofort live irgendwo."
+)
+
+END_CONVERSATION_TEXT = (
+    "\n\nSobald das Gespräch zu einem natürlichen Ende kommt (die Person "
+    "hat nichts mehr, worüber sie reden möchte, und du hast dich bereits "
+    "verabschiedet, z.B. mit 'einen schönen Tag noch'), rufe SOFORT im "
+    "selben Atemzug wie diesen Abschiedssatz das Tool 'end_conversation' "
+    "auf -- das beendet das Gespräch technisch und bringt das Gerät "
+    "zurück zur Startseite für die nächste Person. Rufe es NIE auf, "
+    "bevor du dich verabschiedet hast, und NIE, solange noch etwas offen "
+    "ist oder die Person gerade erst gefragt wurde, ob es noch etwas "
+    "gibt."
 )
 
 PRINTING_ENABLED_TEXT = (
@@ -132,6 +146,7 @@ class Persona:
         instructions += "\n\n" + BEHAVIOR_GUIDANCE
         instructions += "\n\n" + TOOL_MECHANICS
         instructions += PRINTING_ENABLED_TEXT if printing_enabled else PRINTING_DISABLED_TEXT
+        instructions += END_CONVERSATION_TEXT
         instructions += "\n\n" + SAFETY_GUIDANCE
         return instructions
 
