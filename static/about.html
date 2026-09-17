@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Albert – Über diese App</title>
+<link rel="stylesheet" href="style.css" />
+<style>
+  body { align-items: flex-start; }
+  #about-app { max-width: 720px; margin-top: 2rem; }
+  .back-link { color: var(--muted); text-decoration: none; font-size: 0.9rem; }
+  .back-link:hover { color: var(--text); }
+  h1 { text-align: left; margin: 1rem 0 0.5rem; }
+  .intro { color: var(--muted); margin: 0 0 1.5rem; line-height: 1.5; }
+  .diagram-wrap {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .diagram-wrap svg { width: 100%; height: auto; display: block; }
+  .points {
+    display: grid;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .point {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 1rem 1.2rem;
+  }
+  .point h2 {
+    margin: 0 0 0.4rem;
+    font-size: 1rem;
+    color: var(--text);
+  }
+  .point p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.92rem;
+    line-height: 1.5;
+  }
+  .point code {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 4px;
+    padding: 0.1rem 0.35rem;
+    font-size: 0.85em;
+    color: var(--text);
+  }
+  #print-button {
+    border: 1px solid var(--card-border);
+    border-radius: 999px;
+    padding: 0.5rem 1.2rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    background: transparent;
+    color: var(--text);
+    margin-bottom: 2rem;
+  }
+  #print-button:hover { border-color: var(--accent); }
+
+  @media print {
+    .no-print { display: none !important; }
+    body { padding: 0; background: #fff; color: #111; }
+    .diagram-wrap, .point { background: #fff; border-color: #ccc; }
+    .point p, .intro { color: #333; }
+    .point code { background: #eee; color: #111; }
+  }
+</style>
+</head>
+<body>
+  <main id="about-app">
+    <a class="back-link no-print" href="/">&larr; Zurück zu Albert</a>
+    <h1>Wie funktioniert die Wunschmaschine?</h1>
+    <p class="intro">
+      Technischer Überblick über die Architektur: welche Komponente läuft
+      lokal, welche externen APIs werden angesprochen, und welche Daten
+      fliessen wohin.
+    </p>
+
+    <button id="print-button" class="no-print" type="button">🖨️ Diese Seite drucken</button>
+
+    <div class="diagram-wrap">
+      <svg viewBox="0 0 800 470" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="var(--muted)" />
+          </marker>
+        </defs>
+
+        <rect x="260" y="20" width="280" height="80" rx="14" fill="var(--card-bg)" stroke="var(--card-border)" stroke-width="1.5" />
+        <text x="400" y="48" text-anchor="middle" fill="var(--text)" font-size="15" font-weight="600">Browser (Web Audio API)</text>
+        <text x="400" y="68" text-anchor="middle" fill="var(--muted)" font-size="11.5">Mikrofon-Stream: PCM16, 24 kHz</text>
+        <text x="400" y="86" text-anchor="middle" fill="var(--muted)" font-size="11.5">Wiedergabe der Audio-Antwort</text>
+
+        <line x1="400" y1="100" x2="400" y2="150" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#arrow)" />
+
+        <rect x="200" y="150" width="400" height="90" rx="14" fill="var(--card-bg)" stroke="var(--accent)" stroke-width="1.5" />
+        <text x="400" y="176" text-anchor="middle" fill="var(--text)" font-size="15" font-weight="600">Lokaler Server (Python / FastAPI)</text>
+        <text x="400" y="197" text-anchor="middle" fill="var(--muted)" font-size="11.5">WebSocket-Relay Browser &#8596; Realtime API</text>
+        <text x="400" y="215" text-anchor="middle" fill="var(--muted)" font-size="11.5">Function Calling steuert submit_wish, submit_challenge, confirm_print</text>
+
+        <line x1="320" y1="240" x2="155" y2="320" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#arrow)" />
+        <line x1="400" y1="240" x2="400" y2="320" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#arrow)" />
+        <line x1="480" y1="240" x2="650" y2="320" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#arrow)" />
+
+        <rect x="30" y="320" width="250" height="120" rx="14" fill="var(--card-bg)" stroke="var(--card-border)" stroke-width="1.5" />
+        <text x="155" y="348" text-anchor="middle" fill="var(--text)" font-size="14.5" font-weight="600">OpenAI Realtime API</text>
+        <text x="155" y="368" text-anchor="middle" fill="var(--muted)" font-size="11">Modell: gpt-realtime</text>
+        <text x="155" y="385" text-anchor="middle" fill="var(--muted)" font-size="11">wss://api.openai.com/v1/realtime</text>
+        <text x="155" y="402" text-anchor="middle" fill="var(--muted)" font-size="11">Speech-to-Speech: STT + LLM + TTS</text>
+
+        <rect x="285" y="320" width="230" height="120" rx="14" fill="var(--card-bg)" stroke="var(--card-border)" stroke-width="1.5" />
+        <text x="400" y="348" text-anchor="middle" fill="var(--text)" font-size="14.5" font-weight="600">Airtable REST API</text>
+        <text x="400" y="368" text-anchor="middle" fill="var(--muted)" font-size="11">Tabelle _input_pipeline</text>
+        <text x="400" y="385" text-anchor="middle" fill="var(--muted)" font-size="11">POST je erfasstem Eintrag</text>
+        <text x="400" y="402" text-anchor="middle" fill="var(--muted)" font-size="11">Base: HSG-SSI-ecosystem (DEV_v2)</text>
+
+        <rect x="530" y="320" width="240" height="120" rx="14" fill="var(--card-bg)" stroke="var(--card-border)" stroke-width="1.5" />
+        <text x="650" y="348" text-anchor="middle" fill="var(--text)" font-size="14.5" font-weight="600">Windows-Druckertreiber</text>
+        <text x="650" y="368" text-anchor="middle" fill="var(--muted)" font-size="11">Direkt via GDI (win32print)</text>
+        <text x="650" y="385" text-anchor="middle" fill="var(--muted)" font-size="11">kein PDF-Viewer involviert</text>
+        <text x="650" y="402" text-anchor="middle" fill="var(--muted)" font-size="11">nur bei aktivem Druck-Flag</text>
+
+        <text x="400" y="460" text-anchor="middle" fill="var(--muted)" font-size="11">Pfeile zeigen moegliche Datenpfade -- nicht alle drei Ziele werden in jeder Session angesprochen.</text>
+      </svg>
+    </div>
+
+    <div class="points">
+      <div class="point">
+        <h2>Lokale Komponente</h2>
+        <p>
+          Ein Python/FastAPI-Backend läuft auf diesem Rechner. Es hält eine
+          WebSocket-Verbindung zum Browser (Audio-Capture über die Web Audio
+          API) und eine zweite WebSocket-Verbindung zur OpenAI Realtime API.
+          Es reicht den Audio-Stream in beide Richtungen durch, wertet
+          Function-Call-Events aus (submit_wish, submit_challenge,
+          confirm_print, end_conversation) und spricht bei einem
+          Druckauftrag direkt den Windows-Druckertreiber per GDI
+          (win32print) an -- kein Zwischenschritt über eine PDF-Anwendung.
+        </p>
+      </div>
+      <div class="point">
+        <h2>Wird meine Stimme wirklich übertragen?</h2>
+        <p>
+          Ja. Es läuft keine lokale Spracherkennung (kein Whisper- oder
+          sonstiges STT-Modell auf diesem Rechner). Der Audio-Stream (PCM16,
+          24 kHz) wird per WebSocket direkt an
+          <code>wss://api.openai.com/v1/realtime</code> übertragen, Modell
+          <code>gpt-realtime</code> -- ein Speech-to-Speech-Modell, das
+          Spracherkennung, Sprachverständnis/Antwortgenerierung und
+          Sprachsynthese in einem einzigen Modellaufruf kombiniert, ohne
+          Umweg über eine separate Text-Transkription. Es gelten OpenAIs
+          Nutzungsbedingungen für API-Traffic (nicht identisch mit den
+          Regeln für ChatGPT im Browser).
+        </p>
+      </div>
+      <div class="point">
+        <h2>Airtable REST API</h2>
+        <p>
+          Ein per Function Call (<code>submit_wish</code> /
+          <code>submit_challenge</code>) erfasster Eintrag wird per
+          POST-Request über die Airtable REST API in die Tabelle
+          <code>_input_pipeline</code> der Base "HSG-SSI-ecosystem (DEV_v2)"
+          geschrieben. Das Team sichtet und triagiert die Einträge dort
+          (Feld <code>triage_status</code>). Ein Name ist kein Pflichtfeld,
+          nur wenn er freiwillig genannt wird.
+        </p>
+      </div>
+      <div class="point">
+        <h2>Was wird NICHT gemacht?</h2>
+        <p>
+          Keine Kamera, keine Videoaufnahme, keine lokale Aufzeichnung oder
+          Zwischenspeicherung des Audio-Streams. Es gibt keinen
+          Session-Speicher zwischen zwei Gesprächen (kein Cookie, kein
+          Verlauf) -- nach der Verabschiedung wird die WebSocket-Verbindung
+          geschlossen und die Oberfläche zurückgesetzt.
+        </p>
+      </div>
+    </div>
+
+    <p class="intro" style="font-size: 0.78rem; margin-top: -0.5rem;">
+      Avatar-Grafiken: "Avataaars" von Pablo Stanley, bereitgestellt über
+      <a href="https://www.dicebear.com/" target="_blank" rel="noopener" style="color: inherit;">DiceBear</a>.
+    </p>
+  </main>
+
+  <footer id="version-footer" class="version-footer no-print">
+    <a href="/board.html">Themen-Board</a>
+    &nbsp;·&nbsp;
+    <a href="/setup.html">Einstellungen</a>
+    &nbsp;·&nbsp;
+    <a href="/about.html">Über diese App</a>
+    &nbsp;·&nbsp;
+    <a href="https://github.com/jus-dan/albert" target="_blank" rel="noopener" id="version-text"></a>
+  </footer>
+  <script>
+    document.getElementById("print-button").addEventListener("click", () => window.print());
+    fetch("/api/version")
+      .then((r) => r.json())
+      .then((d) => { document.getElementById("version-text").textContent = d.version; })
+      .catch(() => {});
+  </script>
+</body>
+</html>

@@ -88,6 +88,12 @@ Einstellungen und zeigt die laufende Version.
   neuesten Anliegen und Zukunftswünsche als Post-its (Anzahl je Spalte
   einstellbar). Rechtsklick auf eine Notiz markiert sie in Airtable als
   "rejected" (kein echtes Löschen, sondern der normale Team-Workflow).
+- **`/about.html`** ("Über diese App", auch im Footer verlinkt) —
+  Transparenz-Seite für Besucherinnen und Besucher: ein Strukturbild
+  zeigt, was lokal auf dem Gerät passiert, wofür die OpenAI-Realtime-API
+  gebraucht wird und wo erfasste Wünsche/Anliegen landen (Airtable).
+  Über den "Diese Seite drucken"-Knopf lässt sich die Seite auch
+  ausdrucken und z.B. neben dem Gerät aufhängen.
 
 ### Themen-Board auf einem zweiten Rechner
 
@@ -145,6 +151,16 @@ Hinweis: Beide Varianten benoetigen Zugriff auf Mikrofon und Lautsprecher
 
 Wird bei jedem Tag aktualisiert.
 
+- **v1.2.8** — Persona-Avatare auf der Startseite ersetzt: statt der
+  selbst gezeichneten Platzhalter jetzt fertige "Avataaars"-Illustrationen
+  (via DiceBear), passend zu jeder Person -- Albert z.B. deutlich älter
+  und mit Schnurrbart. "Über diese App" auf Wunsch technischer
+  formuliert (konkrete Modell-/Protokoll-/API-Angaben).
+- **v1.2.7** — Neue Transparenz-Seite `/about.html` ("Über diese App",
+  im Footer verlinkt): Strukturbild zeigt Besucherinnen und Besuchern,
+  was lokal passiert, wofür OpenAI gebraucht wird und wo Wünsche/
+  Anliegen gespeichert werden (Airtable) -- inklusive Druckfunktion,
+  um die Seite z.B. neben dem Gerät aufzuhängen.
 - **v1.2.6** — Abschied vor Gesprächsende zuverlässig gemacht: statt sich
   auf das Modell zu verlassen, erzwingt der Server jetzt eine eigene,
   dedizierte Abschieds-Antwort (Dank, Hinweis dass der Chatverlauf
