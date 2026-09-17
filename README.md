@@ -145,6 +145,13 @@ Hinweis: Beide Varianten benoetigen Zugriff auf Mikrofon und Lautsprecher
 
 Wird bei jedem Tag aktualisiert.
 
+- **v1.2.5** — Gespräch endet nach der Verabschiedung automatisch und
+  springt zur Personenauswahl zurück (neues Tool `end_conversation`,
+  wartet bis der Abschiedssatz zu Ende gesprochen ist). Begrüssung
+  natürlicher formuliert ("Hey, schön bist du da!"), und Albert darf
+  bei lockerem Reden mitgehen, statt sofort in die Wunsch/Anliegen-
+  Fragen zu springen -- schlägt aber vor Gesprächsende den Bogen dahin
+  zurück.
 - **v1.2.4** — README dokumentiert, wie man das Themen-Board auf einem
   zweiten Rechner anzeigt (eigene, unabhaengige Albert-Installation, da
   das Board direkt aus Airtable liest -- keine Netzwerkverbindung
