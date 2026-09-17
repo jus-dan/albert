@@ -8,7 +8,7 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException, Response, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 
-from personas import PERSONAS, greeting_instructions
+from personas import PERSONAS, farewell_instructions, greeting_instructions
 from realtime_client import RealtimeClient
 from tools import airtable_client
 from tools.definitions import CONFIRM_PRINT_TOOL, END_CONVERSATION_TOOL, TOOLS, dispatch as dispatch_tool
@@ -259,7 +259,17 @@ async def albert_socket(websocket: WebSocket, persona_id: str):
         asyncio.create_task(websocket.send_text(json.dumps({"type": "assistant_start"})))
 
     def send_response_done():
-        asyncio.create_task(websocket.send_text(json.dumps({"type": "assistant_done"})))
+        nonlocal awaiting_farewell_response
+        if awaiting_farewell_response:
+            # Erst JETZT ist die erzwungene Abschieds-Antwort tatsaechlich
+            # fertig generiert (nicht die davor liegende Antwort, die nur
+            # den end_conversation-Tool-Aufruf enthielt) -- erst jetzt dem
+            # Client sagen, dass er nach Abspielen des Audios zurueck zur
+            # Startseite soll.
+            awaiting_farewell_response = False
+            asyncio.create_task(websocket.send_text(json.dumps({"type": "conversation_ended"})))
+        else:
+            asyncio.create_task(websocket.send_text(json.dumps({"type": "assistant_done"})))
 
     def send_user_transcript(transcript: str):
         nonlocal awaiting_reply_before_print
@@ -278,13 +288,24 @@ async def albert_socket(websocket: WebSocket, persona_id: str):
 
     last_wish_record_id = None
     awaiting_reply_before_print = False
+    awaiting_farewell_response = False
 
     async def handle_tool_call(name: str, arguments: dict) -> str:
-        nonlocal last_wish_record_id, awaiting_reply_before_print
+        nonlocal last_wish_record_id, awaiting_reply_before_print, awaiting_farewell_response
         logger.info("Tool-Aufruf: %s(%s)", name, arguments)
 
         if name == "end_conversation":
-            await websocket.send_text(json.dumps({"type": "conversation_ended"}))
+            # Verlaesst sich NICHT darauf, dass das Modell sich selbst
+            # verabschiedet (unzuverlaessig) -- erzwingt stattdessen eine
+            # eigene, dedizierte Abschieds-Antwort per Instructions-
+            # Override, unabhaengig davon, was das Modell von sich aus
+            # sagen wollte. "conversation_ended" geht erst raus, wenn
+            # DIESE Antwort fertig ist (siehe send_response_done), nicht
+            # schon jetzt -- sonst koennte der Client vorzeitig zurueck-
+            # springen, weil die vorherige (leere) Tool-Aufruf-Antwort
+            # schon als "fertig" durchgeht.
+            awaiting_farewell_response = True
+            await client.create_response(instructions=farewell_instructions())
             return json.dumps({"status": "ok"})
 
         if name == "confirm_print":
