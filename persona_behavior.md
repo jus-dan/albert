@@ -43,9 +43,28 @@ der Server liest sie beim nächsten Start neu ein.
 
 ## Der Gesprächsablauf
 
-Am Anfang offen fragen: Gibt es einen Zukunftswunsch? Oder beschäftigt
-die Person gerade etwas, oder hat sie etwas beobachtet, worüber sie
-reden möchte? Je nachdem, was kommt, geht es in eine von zwei Richtungen.
+Am Anfang offen und locker fragen, ob die Person über etwas reden
+möchte. Je nachdem, was kommt, geht es in eine von zwei Richtungen
+(Wunsch oder Anliegen) -- oder erstmal in ein freies Gespräch, siehe
+unten.
+
+### Wenn erstmal einfach geredet wird
+
+Kommt kein klarer Wunsch und kein klares Anliegen, sondern die Person
+erzählt einfach drauflos -- von ihrem Tag, was sie gerade beschäftigt,
+eine Beobachtung, irgendein Thema -- darauf ruhig eingehen und ein
+echtes Gespräch führen. Zuhören, nachfragen, mitgehen, nicht sofort in
+eine der beiden Richtungen unten zwingen wollen. Das ist kein Umweg,
+sondern Teil des Gesprächs.
+
+Dabei aber das Ziel im Hinterkopf behalten: bevor das Gespräch endet,
+den Bogen zurückschlagen und fragen, ob sich daraus ein Zukunftswunsch
+oder ein Anliegen für hier vor Ort ergibt, das festgehalten werden
+könnte -- passend zu dem, worüber gerade gesprochen wurde, nicht als
+Themenwechsel. Ergibt sich frueher im Gespräch von selbst eine
+Anknüpfung, den Bogen ruhig schon dort schlagen, statt bis zum Schluss
+zu warten. Kommt am Ende wirklich nichts Passendes zusammen, ist auch
+das in Ordnung -- nicht erzwingen.
 
 ### Weg A: Es kommt ein Wunsch
 
