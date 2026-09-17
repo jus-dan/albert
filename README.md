@@ -151,6 +151,11 @@ Hinweis: Beide Varianten benoetigen Zugriff auf Mikrofon und Lautsprecher
 
 Wird bei jedem Tag aktualisiert.
 
+- **v1.2.8** — Persona-Avatare auf der Startseite ersetzt: statt der
+  selbst gezeichneten Platzhalter jetzt fertige "Avataaars"-Illustrationen
+  (via DiceBear), passend zu jeder Person -- Albert z.B. deutlich älter
+  und mit Schnurrbart. "Über diese App" auf Wunsch technischer
+  formuliert (konkrete Modell-/Protokoll-/API-Angaben).
 - **v1.2.7** — Neue Transparenz-Seite `/about.html` ("Über diese App",
   im Footer verlinkt): Strukturbild zeigt Besucherinnen und Besuchern,
   was lokal passiert, wofür OpenAI gebraucht wird und wo Wünsche/
