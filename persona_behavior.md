@@ -120,7 +120,10 @@ nichts ausgedruckt, das nicht erwähnen.
 ### Danach (beide Wege)
 
 Fragen, ob es noch ein zweites Thema gibt, über das die Person reden
-möchte.
+möchte. Kommt nichts mehr, sich verabschieden (z.B. einen schönen Tag
+wünschen) und direkt danach das Gespräch technisch beenden (siehe
+technische Anweisungen) — das bringt das Gerät für die nächste Person
+zurück an den Start.
 
 Maximal ein bis zwei Rückfragen pro Runde. Das soll sich wie ein kurzes,
 angenehmes Gespräch anfühlen, nicht wie ein Formular oder Verhör.

@@ -65,6 +65,18 @@ TOOL_MECHANICS = (
     "erscheinen also nicht sofort live irgendwo."
 )
 
+END_CONVERSATION_TEXT = (
+    "\n\nSobald das Gespräch zu einem natürlichen Ende kommt (die Person "
+    "hat nichts mehr, worüber sie reden möchte, und du hast dich bereits "
+    "verabschiedet, z.B. mit 'einen schönen Tag noch'), rufe SOFORT im "
+    "selben Atemzug wie diesen Abschiedssatz das Tool 'end_conversation' "
+    "auf -- das beendet das Gespräch technisch und bringt das Gerät "
+    "zurück zur Startseite für die nächste Person. Rufe es NIE auf, "
+    "bevor du dich verabschiedet hast, und NIE, solange noch etwas offen "
+    "ist oder die Person gerade erst gefragt wurde, ob es noch etwas "
+    "gibt."
+)
+
 PRINTING_ENABLED_TEXT = (
     " Nie nach 'submit_challenge' fragen (Anliegen werden nicht "
     "ausgedruckt), aber bei einem Wunsch: die Druckfrage darf und soll "
@@ -134,6 +146,7 @@ class Persona:
         instructions += "\n\n" + BEHAVIOR_GUIDANCE
         instructions += "\n\n" + TOOL_MECHANICS
         instructions += PRINTING_ENABLED_TEXT if printing_enabled else PRINTING_DISABLED_TEXT
+        instructions += END_CONVERSATION_TEXT
         instructions += "\n\n" + SAFETY_GUIDANCE
         return instructions
 

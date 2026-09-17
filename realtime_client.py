@@ -32,6 +32,7 @@ class RealtimeClient:
         on_audio_delta,
         on_transcript_delta=None,
         on_response_start=None,
+        on_response_done=None,
         on_user_transcript=None,
         on_tool_call=None,
         on_speech_started=None,
@@ -39,6 +40,7 @@ class RealtimeClient:
         self._on_audio_delta = on_audio_delta
         self._on_transcript_delta = on_transcript_delta
         self._on_response_start = on_response_start
+        self._on_response_done = on_response_done
         self._on_user_transcript = on_user_transcript
         self._on_tool_call = on_tool_call
         self._on_speech_started = on_speech_started
@@ -222,7 +224,10 @@ class RealtimeClient:
                 },
             }
         )
-        await self.create_response()
+        if name != "end_conversation":
+            # Nach end_conversation soll das Modell nicht noch eine weitere
+            # Antwort generieren -- der Abschied wurde schon gesagt.
+            await self.create_response()
 
     async def _receive_loop(self):
         try:
@@ -242,6 +247,8 @@ class RealtimeClient:
                         self._on_response_start()
                 elif event_type == "response.done":
                     self._response_active = False
+                    if self._on_response_done:
+                        self._on_response_done()
                 elif event_type == "conversation.item.input_audio_transcription.completed":
                     transcript = event.get("transcript", "")
                     await self._lock_language_from_transcript(transcript)

@@ -11,7 +11,7 @@ from fastapi.staticfiles import StaticFiles
 from personas import PERSONAS, greeting_instructions
 from realtime_client import RealtimeClient
 from tools import airtable_client
-from tools.definitions import CONFIRM_PRINT_TOOL, TOOLS, dispatch as dispatch_tool
+from tools.definitions import CONFIRM_PRINT_TOOL, END_CONVERSATION_TOOL, TOOLS, dispatch as dispatch_tool
 from tools.printing import list_printers, print_test_page, print_wunschzettel_directly
 from tools.settings import DEFAULT_SETTINGS, VALID_VOICES, load_settings, printing_active, save_settings
 from tools.text_utils import swiss_de
@@ -258,6 +258,9 @@ async def albert_socket(websocket: WebSocket, persona_id: str):
     def send_response_start():
         asyncio.create_task(websocket.send_text(json.dumps({"type": "assistant_start"})))
 
+    def send_response_done():
+        asyncio.create_task(websocket.send_text(json.dumps({"type": "assistant_done"})))
+
     def send_user_transcript(transcript: str):
         nonlocal awaiting_reply_before_print
         awaiting_reply_before_print = False
@@ -279,6 +282,10 @@ async def albert_socket(websocket: WebSocket, persona_id: str):
     async def handle_tool_call(name: str, arguments: dict) -> str:
         nonlocal last_wish_record_id, awaiting_reply_before_print
         logger.info("Tool-Aufruf: %s(%s)", name, arguments)
+
+        if name == "end_conversation":
+            await websocket.send_text(json.dumps({"type": "conversation_ended"}))
+            return json.dumps({"status": "ok"})
 
         if name == "confirm_print":
             if not last_wish_record_id:
@@ -352,12 +359,15 @@ async def albert_socket(websocket: WebSocket, persona_id: str):
         on_audio_delta=send_audio,
         on_transcript_delta=send_transcript,
         on_response_start=send_response_start,
+        on_response_done=send_response_done,
         on_user_transcript=send_user_transcript,
         on_tool_call=handle_tool_call,
         on_speech_started=send_speech_started,
     )
 
-    session_tools = TOOLS + [CONFIRM_PRINT_TOOL] if printing_on else TOOLS
+    session_tools = TOOLS + [END_CONVERSATION_TOOL]
+    if printing_on:
+        session_tools = session_tools + [CONFIRM_PRINT_TOOL]
     voice = settings.get("persona_voices", {}).get(persona_id) or persona.voice
     if voice not in VALID_VOICES:
         voice = persona.voice
