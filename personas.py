@@ -23,6 +23,20 @@ def greeting_instructions(push_to_talk: bool) -> str:
         "Einladung zum Reden."
     )
 
+
+def farewell_instructions() -> str:
+    return (
+        "Das Gespräch ist jetzt zu Ende. Verabschiede dich jetzt in der "
+        "Sprache, in der ihr bisher gesprochen habt -- alle drei Teile "
+        "gehören dazu, keiner darf fehlen: (1) bedanke dich in eigenen "
+        "Worten fürs Gespräch, (2) erwähne, dass ihr den Chatverlauf "
+        "jetzt löscht und der Bildschirm für die nächste Person "
+        "zurückgesetzt wird, (3) wünsche zum Schluss etwas Freundliches "
+        "(z.B. einen schönen Tag, viel Spass noch). Sag NUR diesen "
+        "Abschied, kurz und warm -- keine Rückfragen, keine weiteren "
+        "Themen, keinen Tool-Aufruf."
+    )
+
 BEHAVIOR_FILE = Path(__file__).resolve().parent / "persona_behavior.md"
 
 
@@ -67,14 +81,12 @@ TOOL_MECHANICS = (
 
 END_CONVERSATION_TEXT = (
     "\n\nSobald das Gespräch zu einem natürlichen Ende kommt (die Person "
-    "hat nichts mehr, worüber sie reden möchte, und du hast dich bereits "
-    "verabschiedet, z.B. mit 'einen schönen Tag noch'), rufe SOFORT im "
-    "selben Atemzug wie diesen Abschiedssatz das Tool 'end_conversation' "
-    "auf -- das beendet das Gespräch technisch und bringt das Gerät "
-    "zurück zur Startseite für die nächste Person. Rufe es NIE auf, "
-    "bevor du dich verabschiedet hast, und NIE, solange noch etwas offen "
-    "ist oder die Person gerade erst gefragt wurde, ob es noch etwas "
-    "gibt."
+    "hat nichts mehr, worüber sie reden möchte), rufe SOFORT das Tool "
+    "'end_conversation' auf, OHNE selbst noch etwas zu sagen oder dich "
+    "zu verabschieden -- der Abschied wird automatisch fuer dich "
+    "uebernommen, das ist NICHT deine Aufgabe an dieser Stelle. Rufe es "
+    "NIE auf, solange noch etwas offen ist oder die Person gerade erst "
+    "gefragt wurde, ob es noch etwas gibt."
 )
 
 PRINTING_ENABLED_TEXT = (

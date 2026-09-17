@@ -145,6 +145,13 @@ Hinweis: Beide Varianten benoetigen Zugriff auf Mikrofon und Lautsprecher
 
 Wird bei jedem Tag aktualisiert.
 
+- **v1.2.6** — Abschied vor Gesprächsende zuverlässig gemacht: statt sich
+  auf das Modell zu verlassen, erzwingt der Server jetzt eine eigene,
+  dedizierte Abschieds-Antwort (Dank, Hinweis dass der Chatverlauf
+  gelöscht wird, freundlicher Wunsch) -- inkl. Fix einer Race Condition,
+  die den Abschied manchmal übersprang. Layout-Abstand zum Footer im
+  Gespräch behoben. Neues Test-Kommando ("mach schneller") für
+  schnelleres manuelles Durchtesten bis zur Druckfrage.
 - **v1.2.5** — Gespräch endet nach der Verabschiedung automatisch und
   springt zur Personenauswahl zurück (neues Tool `end_conversation`,
   wartet bis der Abschiedssatz zu Ende gesprochen ist). Begrüssung

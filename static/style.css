@@ -28,7 +28,7 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: "Segoe UI", system-ui, sans-serif;
-  padding: 2rem 1rem;
+  padding: 2rem 1rem 3.5rem;
 }
 
 #app {

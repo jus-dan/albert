@@ -8,7 +8,7 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException, Response, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 
-from personas import PERSONAS, greeting_instructions
+from personas import PERSONAS, farewell_instructions, greeting_instructions
 from realtime_client import RealtimeClient
 from tools import airtable_client
 from tools.definitions import CONFIRM_PRINT_TOOL, END_CONVERSATION_TOOL, TOOLS, dispatch as dispatch_tool
@@ -256,10 +256,23 @@ async def albert_socket(websocket: WebSocket, persona_id: str):
         )
 
     def send_response_start():
+        nonlocal expecting_farewell_created, awaiting_farewell_response
+        if expecting_farewell_created:
+            # Die eben gestartete Antwort ist die erzwungene Abschieds-
+            # Antwort selbst (nicht die davor liegende, leere Antwort mit
+            # dem end_conversation-Tool-Aufruf) -- erst ab jetzt zaehlt
+            # ihr response.done als "Abschied ist fertig".
+            expecting_farewell_created = False
+            awaiting_farewell_response = True
         asyncio.create_task(websocket.send_text(json.dumps({"type": "assistant_start"})))
 
     def send_response_done():
-        asyncio.create_task(websocket.send_text(json.dumps({"type": "assistant_done"})))
+        nonlocal awaiting_farewell_response
+        if awaiting_farewell_response:
+            awaiting_farewell_response = False
+            asyncio.create_task(websocket.send_text(json.dumps({"type": "conversation_ended"})))
+        else:
+            asyncio.create_task(websocket.send_text(json.dumps({"type": "assistant_done"})))
 
     def send_user_transcript(transcript: str):
         nonlocal awaiting_reply_before_print
@@ -278,13 +291,27 @@ async def albert_socket(websocket: WebSocket, persona_id: str):
 
     last_wish_record_id = None
     awaiting_reply_before_print = False
+    awaiting_farewell_response = False
+    expecting_farewell_created = False
 
     async def handle_tool_call(name: str, arguments: dict) -> str:
-        nonlocal last_wish_record_id, awaiting_reply_before_print
+        nonlocal last_wish_record_id, awaiting_reply_before_print, expecting_farewell_created
         logger.info("Tool-Aufruf: %s(%s)", name, arguments)
 
         if name == "end_conversation":
-            await websocket.send_text(json.dumps({"type": "conversation_ended"}))
+            # Verlaesst sich NICHT darauf, dass das Modell sich selbst
+            # verabschiedet (unzuverlaessig) -- erzwingt stattdessen eine
+            # eigene, dedizierte Abschieds-Antwort per Instructions-
+            # Override, unabhaengig davon, was das Modell von sich aus
+            # sagen wollte. Die JETZIGE Antwort (die nur den Tool-Aufruf
+            # selbst enthaelt) wird gleich auch "fertig" (response.done)
+            # -- das darf NICHT mit dem Ende der Abschieds-Antwort
+            # verwechselt werden, sonst springt der Client zurueck, bevor
+            # der Abschied ueberhaupt gesprochen wurde. Deshalb erst beim
+            # response.created der NEUEN Antwort (siehe
+            # send_response_start) auf "wartet auf Abschied" umschalten.
+            expecting_farewell_created = True
+            await client.create_response(instructions=farewell_instructions())
             return json.dumps({"status": "ok"})
 
         if name == "confirm_print":

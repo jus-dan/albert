@@ -31,7 +31,6 @@ let pendingUserBubbles = [];
 let currentAssistantBubble = null;
 let currentReveal = null;
 let sentChunkCount = 0;
-let conversationEnding = false;
 let pendingAutoReturn = false;
 let autoReturnFallback = null;
 
@@ -57,7 +56,6 @@ function maybeAutoReturn() {
   const audioIdle = activeSources.length === 0 && (!audioContext || audioContext.currentTime >= playhead - 0.05);
   if (!audioIdle) return;
   pendingAutoReturn = false;
-  conversationEnding = false;
   if (autoReturnFallback) {
     clearTimeout(autoReturnFallback);
     autoReturnFallback = null;
@@ -270,17 +268,13 @@ function connectSocket(personaId) {
       stopPlaybackForBargeIn();
       pendingUserBubbles.push(addMessage("user", "…"));
     } else if (message.type === "conversation_ended") {
-      conversationEnding = true;
+      // Kommt erst, wenn die Abschieds-Antwort selbst fertig generiert ist
+      // (siehe server.py) -- ab hier nur noch warten, bis das Audio auch
+      // wirklich zu Ende gespielt wurde.
+      pendingAutoReturn = true;
       if (autoReturnFallback) clearTimeout(autoReturnFallback);
-      autoReturnFallback = setTimeout(() => {
-        conversationEnding = false;
-        returnToStart();
-      }, 15000);
-    } else if (message.type === "assistant_done") {
-      if (conversationEnding) {
-        pendingAutoReturn = true;
-        maybeAutoReturn();
-      }
+      autoReturnFallback = setTimeout(returnToStart, 15000);
+      maybeAutoReturn();
     } else if (message.type === "error") {
       setStatus("error", message.message || "Fehler");
     }
@@ -373,7 +367,6 @@ async function startSession() {
   currentAssistantBubble = null;
   currentReveal = null;
   pendingUserBubbles = [];
-  conversationEnding = false;
   pendingAutoReturn = false;
   if (autoReturnFallback) {
     clearTimeout(autoReturnFallback);
@@ -393,7 +386,6 @@ function stopSession() {
   micIndicator.hidden = true;
   audioDebug.hidden = true;
   flushReveal();
-  conversationEnding = false;
   pendingAutoReturn = false;
   if (autoReturnFallback) {
     clearTimeout(autoReturnFallback);
