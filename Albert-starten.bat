@@ -167,7 +167,6 @@ if not exist ".env" (
     echo In der sich gleich oeffnenden Datei .env musst du eintragen:
     echo   - OPENAI_API_KEY
     echo   - AIRTABLE_API_TOKEN
-    echo   - AIRTABLE_BASE_ID
     echo.
     echo Datei speichern, dann diese Datei hier noch einmal starten.
     echo.
