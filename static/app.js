@@ -33,6 +33,8 @@ let currentReveal = null;
 let sentChunkCount = 0;
 let pendingAutoReturn = false;
 let autoReturnFallback = null;
+let spaceHeld = false;
+let autoRecordOnReady = false;
 
 const REVEAL_CHARS_PER_SEC = 24;
 
@@ -328,6 +330,12 @@ async function setupMic() {
   micReady = true;
   if (interactionMode !== "push_to_talk") {
     micIndicator.hidden = false;
+  } else if (autoRecordOnReady && spaceHeld && isActive && !isRecording) {
+    // Knopf wurde zum Starten gedrueckt und ist immer noch gehalten, wenn
+    // das Mikro bereit wird -- direkt weiter in die Aufnahme, ohne dass
+    // die Person den Knopf extra loslassen und neu druecken muss.
+    autoRecordOnReady = false;
+    beginRecording();
   }
 }
 
@@ -386,6 +394,7 @@ function stopSession() {
   micIndicator.hidden = true;
   audioDebug.hidden = true;
   flushReveal();
+  autoRecordOnReady = false;
   pendingAutoReturn = false;
   if (autoReturnFallback) {
     clearTimeout(autoReturnFallback);
@@ -426,6 +435,44 @@ document.querySelectorAll(".persona-card").forEach((btn) => {
   btn.addEventListener("click", () => selectPersona(btn.dataset.persona));
 });
 
+function pickDefaultPersonaId() {
+  const cards = Array.from(document.querySelectorAll(".persona-card")).filter((btn) => !btn.hidden);
+  if (cards.some((btn) => btn.dataset.persona === "albert")) return "albert";
+  return cards.length ? cards[0].dataset.persona : null;
+}
+
+function beginRecording() {
+  isRecording = true;
+  micIndicator.hidden = false;
+  stopPlaybackForBargeIn();
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify({ type: "interrupt" }));
+  }
+}
+
+function endRecording() {
+  isRecording = false;
+  micIndicator.hidden = true;
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify({ type: "commit" }));
+    pendingUserBubbles.push(addMessage("user", "…"));
+  }
+}
+
+// Der gruene Knopf soll auch auf der Startseite (vor Personenwahl) und nach
+// Personenwahl (statt dem Start-Button) ein Gespraech in Gang bringen --
+// nicht nur waehrend einer schon laufenden Session zum Sprechen.
+function handleButtonPressToStart() {
+  if (conversation.hidden) {
+    const personaId = pickDefaultPersonaId();
+    if (!personaId) return;
+    selectPersona(personaId);
+  }
+  if (isActive) return;
+  autoRecordOnReady = true;
+  startSession();
+}
+
 async function loadSettings() {
   try {
     const resp = await fetch("/api/settings");
@@ -455,26 +502,24 @@ backButton.addEventListener("click", returnToStart);
 
 document.addEventListener("keydown", (event) => {
   if (interactionMode !== "push_to_talk") return;
-  if (event.code !== "Space" || conversation.hidden || event.repeat) return;
+  if (event.code !== "Space" || event.repeat) return;
   event.preventDefault();
-  if (!isActive || !micReady || isRecording) return;
-  isRecording = true;
-  micIndicator.hidden = false;
-  stopPlaybackForBargeIn();
-  if (socket && socket.readyState === WebSocket.OPEN) {
-    socket.send(JSON.stringify({ type: "interrupt" }));
+  spaceHeld = true;
+
+  if (conversation.hidden || !isActive) {
+    handleButtonPressToStart();
+    return;
   }
+  if (!micReady || isRecording) return;
+  beginRecording();
 });
 
 document.addEventListener("keyup", (event) => {
   if (interactionMode !== "push_to_talk") return;
-  if (event.code !== "Space" || conversation.hidden) return;
+  if (event.code !== "Space") return;
   event.preventDefault();
+  spaceHeld = false;
+  autoRecordOnReady = false;
   if (!isRecording) return;
-  isRecording = false;
-  micIndicator.hidden = true;
-  if (socket && socket.readyState === WebSocket.OPEN) {
-    socket.send(JSON.stringify({ type: "commit" }));
-    pendingUserBubbles.push(addMessage("user", "…"));
-  }
+  endRecording();
 });
