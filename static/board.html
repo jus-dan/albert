@@ -172,7 +172,6 @@
 
   <script>
     const POLL_MS = 15000;
-    const MAX_NOTES = 30;
 
     const ENTITY_LABELS = {
       future_wish: "Zukunftswunsch",
@@ -184,29 +183,36 @@
       wish: document.getElementById("surface-wish"),
     };
 
-    // key -> { el, x, y }
+    // key -> { el, rotation, slot }
     const known = { challenge: new Map(), wish: new Map() };
+    // belegte Rasterplaetze je Spalte, damit sich Zettel nie ueberlappen
+    const occupiedSlots = { challenge: new Set(), wish: new Set() };
 
-    function seededRandom(seed) {
-      let h = 0;
-      for (let i = 0; i < seed.length; i++) {
-        h = (h * 31 + seed.charCodeAt(i)) >>> 0;
-      }
-      return () => {
-        h = (h * 1664525 + 1013904223) >>> 0;
-        return h / 4294967296;
-      };
+    const NOTE_CELL_WIDTH = 210;
+    const NOTE_CELL_HEIGHT = 150;
+
+    function nextFreeSlot(kind) {
+      let i = 0;
+      while (occupiedSlots[kind].has(i)) i++;
+      occupiedSlots[kind].add(i);
+      return i;
     }
 
-    function assignPosition(surface, key) {
-      const rand = seededRandom(key);
+    function slotToPosition(surface, slot) {
       const rect = surface.getBoundingClientRect();
-      const width = Math.max(rect.width, 400);
-      const height = Math.max(rect.height, 400);
-      const x = 8 + rand() * Math.max(1, width - 210);
-      const y = 8 + rand() * Math.max(1, height - 130);
-      const rotation = -6 + rand() * 12;
-      return { x, y, rotation };
+      const cols = Math.max(1, Math.floor(Math.max(rect.width, 400) / NOTE_CELL_WIDTH));
+      const col = slot % cols;
+      const row = Math.floor(slot / cols);
+      // leichter, deterministischer Versatz/Drehwinkel fuer den handgemachten
+      // Look -- klein genug, dass sich benachbarte Zettel nie ueberlappen
+      const jitterX = ((col * 37 + row * 11) % 14) - 7;
+      const jitterY = ((row * 53 + col * 17) % 14) - 7;
+      const rotation = -4 + ((col + row) % 5) * 2;
+      return {
+        x: 8 + col * NOTE_CELL_WIDTH + jitterX,
+        y: 8 + row * NOTE_CELL_HEIGHT + jitterY,
+        rotation,
+      };
     }
 
     function formatTime(iso) {
@@ -231,7 +237,8 @@
 
         let record = known[kind].get(key);
         if (!record) {
-          const pos = assignPosition(surface, key);
+          const slot = nextFreeSlot(kind);
+          const pos = slotToPosition(surface, slot);
           const el = document.createElement("div");
           el.className = `note note-${kind}`;
           el.dataset.id = entry.id || "";
@@ -251,7 +258,7 @@
             event.preventDefault();
             openContextMenu(event, { id: entry.id, el, kind, key });
           });
-          record = { el, rotation: pos.rotation };
+          record = { el, rotation: pos.rotation, slot };
           known[kind].set(key, record);
         }
 
@@ -260,11 +267,13 @@
         record.el.style.transform = `scale(${scale}) rotate(${record.rotation}deg)`;
       });
 
-      // Alte Notizen entfernen, die nicht mehr in den letzten MAX_NOTES sind
+      // Alte Notizen entfernen, die nicht mehr in den aktuellen Eintraegen
+      // sind -- Rasterplatz wieder freigeben, damit er neu vergeben wird
       for (const [key, record] of known[kind].entries()) {
         if (!seen.has(key)) {
           record.el.remove();
           known[kind].delete(key);
+          occupiedSlots[kind].delete(record.slot);
         }
       }
 
@@ -353,8 +362,8 @@
       try {
         const resp = await fetch("/api/board");
         const data = await resp.json();
-        renderZone("challenge", (data.challenges || []).slice(0, MAX_NOTES));
-        renderZone("wish", (data.wishes || []).slice(0, MAX_NOTES));
+        renderZone("challenge", data.challenges || []);
+        renderZone("wish", data.wishes || []);
       } catch (err) {
         /* naechster Poll versucht es erneut */
       }

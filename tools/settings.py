@@ -18,6 +18,7 @@ DEFAULT_SETTINGS = {
     "selected_printer": "",  # leer = kein Drucker ausgewaehlt
     "board_item_limit": 15,  # neueste N Challenges bzw. N Wuensche auf dem Themen-Board
     "persona_voices": {"albert": "ash", "albertine": "shimmer", "alex": "alloy"},
+    "ecosystem_lookup_enabled": False,  # darf Albert Organisationen/Initiativen/bisherige Beitraege erwaehnen
 }
 
 

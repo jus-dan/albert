@@ -82,8 +82,10 @@ Einstellungen und zeigt die laufende Version.
   Person hat (mit "Vorhören"-Knopf für einen Audio-Testsatz direkt in der
   Seite), freihändig vs. Push-to-Talk, ob und auf welchem Drucker gedruckt
   wird (inkl. "Testseite drucken"-Knopf, unabhängig von einem Gespräch),
-  wie viele Einträge das Themen-Board je Spalte zeigt, und ob
-  Debug-Informationen im Gespräch angezeigt werden.
+  ob Albert bestehende Organisationen/Initiativen/frühere Beiträge
+  erwähnen darf ("Ökosystem"-Modus, siehe unten), wie viele Einträge das
+  Themen-Board je Spalte zeigt, und ob Debug-Informationen im Gespräch
+  angezeigt werden.
 - **`/board.html`** ("Themen-Board", auch im Footer verlinkt) — für einen
   zweiten Monitor gedacht: zeigt live und synchron aus Airtable die
   neuesten Anliegen und Zukunftswünsche als Post-its (Anzahl je Spalte
@@ -122,11 +124,29 @@ ansehen — beide Ausgaben nutzen denselben Aufbau.
 
 Albert erfasst per Function-Calling zwei Arten von Einträgen in der Tabelle
 `_input_pipeline` (zur Prüfung durch das Team, erscheint also nicht sofort
-live in der Datenbank):
+live in der Datenbank; `source` steht dabei auf `physical_albert`, und
+`about_source` hält fest, welche Persona den Eintrag erfasst hat):
 - **`submit_wish`**: ein Zukunftswunsch — Originalwunsch, warum er der
   Person wichtig ist, und eine selbst entwickelte lokale Idee dazu
 - **`submit_challenge`**: ein Anliegen oder eine Beobachtung, die jemanden
   beschäftigt
+
+### Ökosystem-Modus (optional, standardmässig aus)
+
+Ist "Bestehende Organisationen und Initiativen erwähnen dürfen" in den
+Einstellungen aktiviert, bekommt Albert zusätzlich das Tool
+`lookup_ecosystem`. Normalerweise darf er das erst NACHDEM ein
+Wunsch/Anliegen bereits erfasst wurde, nie vorher (Ausnahme: fragt die
+Person selbst aktiv danach, ob es zu einem Thema schon etwas gibt, darf
+sofort geantwortet werden) — in den Tabellen `organizations`,
+`initiatives` und `_input_pipeline` nach passenden bestehenden Einträgen
+suchen und höchstens einen davon beiläufig erwähnen (z.B. "das gibt's
+hier schon als Initiative X"). Die Suche filtert bei `organizations`/
+`initiatives` hart auf `publish_status='published'` — unveröffentlichte,
+verworfene oder archivierte Einträge werden nie vorgelesen. Die
+Wortsuche nutzt Airtables `REGEX_MATCH` mit Wortgrenzen (nicht die
+einfachere `SEARCH`-Teilstringsuche), damit z.B. eine Suche nach "Velo"
+nicht zufällig "development" trifft.
 
 Alle drei Personas haben feste Leitplanken (jugendfrei, kein Bezug zu
 politischen/religiösen Themen, Schweizer Hochdeutsch ohne "ß") in ihren
@@ -152,6 +172,26 @@ Hinweis: Beide Varianten benoetigen Zugriff auf Mikrofon und Lautsprecher
 
 Wird bei jedem Tag aktualisiert.
 
+- **v1.3.1** — Erfasst jetzt, welche Persona (Albert/Albertine/Alex)
+  einen Eintrag aufgenommen hat (`about_source`-Feld in
+  `_input_pipeline`, bisher ungenutzt -- kein neues Feld nötig).
+  Nebenbei einen echten Bug gefunden: alle Einträge liefen bisher unter
+  `source=web_albert` statt des dafür vorgesehenen `physical_albert`.
+  Ökosystem-Modus: fragt die Person selbst aktiv nach bestehenden
+  Organisationen/Initiativen, darf Albert sofort antworten (auch ohne
+  vorher erfassten Wunsch) und danach entstehende Wünsche normal
+  erfassen.
+- **v1.3.0** — Neuer, standardmässig deaktivierter "Ökosystem-Modus":
+  Albert darf (nach dem Erfassen eines Wunsches/Anliegens, nie davor)
+  bestehende Organisationen, Initiativen und frühere Beiträge aus
+  Airtable nachschlagen und höchstens einen Treffer beiläufig erwähnen.
+  Neues Tool `lookup_ecosystem`, neue Einstellung, harter Filter auf
+  veröffentlichte Einträge, Wortgrenzen-Suche statt Teilstringsuche.
+  Ausserdem: Themen-Board ordnet Post-its jetzt in einem Raster an
+  statt in echt zufälligen Positionen -- keine Überlappung mehr, die
+  Einträge verdeckt. Client-seitige 30er-Obergrenze entfernt, die
+  unabhängig von der (bereits vorhandenen) Einstellung "Anzahl Einträge
+  pro Spalte" existierte und diese bei Werten über 30 überstimmt hätte.
 - **v1.2.9** — Kiosk hat jetzt einen physischen grünen Knopf statt der
   Leertaste (löst technisch weiterhin die Leertaste aus). Begrüssung,
   Bildschirm-Hinweis und Einstellungen entsprechend angepasst. "Hört
