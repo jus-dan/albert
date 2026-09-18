@@ -152,6 +152,10 @@ Hinweis: Beide Varianten benoetigen Zugriff auf Mikrofon und Lautsprecher
 
 Wird bei jedem Tag aktualisiert.
 
+- **v1.2.9** — Kiosk hat jetzt einen physischen grünen Knopf statt der
+  Leertaste (löst technisch weiterhin die Leertaste aus). Begrüssung,
+  Bildschirm-Hinweis und Einstellungen entsprechend angepasst. "Hört
+  zu ..."-Hinweis beim Sprechen deutlich grösser und grün hervorgehoben.
 - **v1.2.8** — Persona-Avatare auf der Startseite ersetzt: statt der
   selbst gezeichneten Platzhalter jetzt fertige "Avataaars"-Illustrationen
   (via DiceBear), passend zu jeder Person -- Albert z.B. deutlich älter
