@@ -58,8 +58,9 @@ bereits installiert sein, den Rest erledigt das Skript.
    lässt sich in den Einstellungen festlegen)
 2. "Start" drücken — die Person verbindet sich und begrüsst dich
 3. Je nach Einstellung entweder einfach drauflos reden (freihändig, Server
-   erkennt selbst, wann jemand spricht) oder die Leertaste gedrückt halten,
-   solange man spricht (Push-to-Talk)
+   erkennt selbst, wann jemand spricht) oder den grünen Knopf gedrückt
+   halten, solange man spricht (Push-to-Talk -- der Knopf löst technisch
+   die Leertaste aus)
 4. Gibt es einen Zukunftswunsch, fragt Albert nach, was sich hier vor Ort
    ändern würde und was man konkret tun könnte — erst dann wird erfasst.
    Bei einem Anliegen/einer Beobachtung reicht eine kurze Bestätigung.
