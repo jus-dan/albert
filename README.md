@@ -175,6 +175,11 @@ Wird bei jedem Tag aktualisiert.
   Airtable nachschlagen und höchstens einen Treffer beiläufig erwähnen.
   Neues Tool `lookup_ecosystem`, neue Einstellung, harter Filter auf
   veröffentlichte Einträge, Wortgrenzen-Suche statt Teilstringsuche.
+  Ausserdem: Themen-Board ordnet Post-its jetzt in einem Raster an
+  statt in echt zufälligen Positionen -- keine Überlappung mehr, die
+  Einträge verdeckt. Client-seitige 30er-Obergrenze entfernt, die
+  unabhängig von der (bereits vorhandenen) Einstellung "Anzahl Einträge
+  pro Spalte" existierte und diese bei Werten über 30 überstimmt hätte.
 - **v1.2.9** — Kiosk hat jetzt einen physischen grünen Knopf statt der
   Leertaste (löst technisch weiterhin die Leertaste aus). Begrüssung,
   Bildschirm-Hinweis und Einstellungen entsprechend angepasst. "Hört
