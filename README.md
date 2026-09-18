@@ -172,6 +172,13 @@ Hinweis: Beide Varianten benoetigen Zugriff auf Mikrofon und Lautsprecher
 
 Wird bei jedem Tag aktualisiert.
 
+- **v1.3.2** — Grüner Knopf startet das Gespräch jetzt auch direkt: auf
+  der Personen-Auswahlseite (startet automatisch mit Albert) und nach
+  der Personenwahl anstelle des Start-Buttons -- hält man ihn dabei
+  gedrückt, geht's nahtlos in die Aufnahme über, sobald das Mikro
+  bereit ist. Ausserdem: bei unklarer oder unverständlicher
+  Spracheingabe fragt Albert neutral nach, statt eine Beeinträchtigung
+  oder Behinderung zu unterstellen.
 - **v1.3.1** — Erfasst jetzt, welche Persona (Albert/Albertine/Alex)
   einen Eintrag aufgenommen hat (`about_source`-Feld in
   `_input_pipeline`, bisher ungenutzt -- kein neues Feld nötig).
