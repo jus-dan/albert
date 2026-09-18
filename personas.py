@@ -6,9 +6,9 @@ GREETING_VAD = (
 )
 
 GREETING_PUSH_TO_TALK = (
-    "Hey, schön bist du da! Wenn du mit mir reden willst, halte die Leertaste "
-    "gedrückt, solange du sprichst, und lass sie los, wenn du von mir eine "
-    "Antwort haben möchtest."
+    "Hey, schön bist du da! Wenn du mit mir reden willst, halte den grünen "
+    "Knopf gedrückt, solange du sprichst, und lass ihn los, wenn du von mir "
+    "eine Antwort haben möchtest."
 )
 
 

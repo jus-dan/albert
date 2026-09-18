@@ -417,7 +417,7 @@ function selectPersona(personaId) {
   modeHint.hidden = false;
   modeHint.textContent =
     interactionMode === "push_to_talk"
-      ? "Leertaste gedrückt halten zum Sprechen"
+      ? "Grünen Knopf gedrückt halten zum Sprechen"
       : "Einfach drauflos reden — kein Knopf nötig";
   setStatus("inactive", "Inaktiv");
 }
