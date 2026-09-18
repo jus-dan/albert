@@ -130,14 +130,19 @@ ECOSYSTEM_LOOKUP_TOOL = {
     "name": "lookup_ecosystem",
     "description": (
         "Sucht in der Datenbank nach bereits bestehenden Organisationen, "
-        "Initiativen und Beitraegen anderer Besucher zu einem Thema. Rufe "
-        "dies NUR auf, NACHDEM der Wunsch bzw. das Anliegen der Person "
-        "schon mit 'submit_wish' oder 'submit_challenge' erfasst wurde -- "
-        "nie davor, sonst beeinflusst du ihre eigene Idee. Hoechstens "
-        "zweimal pro Gespraech. Als 'query' ein bis zwei Stichworte zum "
-        "Thema angeben, nicht den ganzen Satz. Erwaehne nur, was "
-        "zurueckkommt -- erfinde nie eigene Organisationen oder Projekte. "
-        "Kommt nichts zurueck, sag dazu gar nichts."
+        "Initiativen und Beitraegen anderer Besucher zu einem Thema. "
+        "Normalerweise rufe dies erst auf, NACHDEM der Wunsch bzw. das "
+        "Anliegen der Person schon mit 'submit_wish' oder "
+        "'submit_challenge' erfasst wurde -- nicht davor, sonst "
+        "beeinflusst du ihre eigene Idee. AUSNAHME: Fragt die Person "
+        "selbst aktiv danach, ob es zu einem Thema schon etwas gibt "
+        "(z.B. 'Gibt es hier schon eine Initiative fuer X?'), rufe es "
+        "SOFORT auf, auch ohne vorherige Erfassung -- das ist dann die "
+        "direkte Beantwortung ihrer Frage, keine Beeinflussung. "
+        "Hoechstens zweimal pro Gespraech. Als 'query' ein bis zwei "
+        "Stichworte zum Thema angeben, nicht den ganzen Satz. Erwaehne "
+        "nur, was zurueckkommt -- erfinde nie eigene Organisationen oder "
+        "Projekte. Kommt nichts zurueck, sag dazu gar nichts."
     ),
     "parameters": {
         "type": "object",
@@ -152,7 +157,7 @@ ECOSYSTEM_LOOKUP_TOOL = {
 }
 
 
-async def dispatch(name: str, arguments: dict) -> str:
+async def dispatch(name: str, arguments: dict, persona_name: str = "") -> str:
     if name == "submit_wish":
         title = swiss_de(arguments.get("title", ""))
         original_wish = swiss_de(arguments.get("original_wish", ""))
@@ -175,6 +180,7 @@ async def dispatch(name: str, arguments: dict) -> str:
             website="",
             raw_text=about,
             challenge_framing="future_wish",
+            captured_by_persona=persona_name,
         )
         return json.dumps(
             {"status": "ok", "table": result["table"], "record_id": result["record_id"]}
@@ -195,6 +201,7 @@ async def dispatch(name: str, arguments: dict) -> str:
             website="",
             raw_text=description,
             challenge_framing="challenge",
+            captured_by_persona=persona_name,
         )
         return json.dumps(
             {"status": "ok", "table": result["table"], "record_id": result["record_id"]}

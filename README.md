@@ -124,7 +124,8 @@ ansehen — beide Ausgaben nutzen denselben Aufbau.
 
 Albert erfasst per Function-Calling zwei Arten von Einträgen in der Tabelle
 `_input_pipeline` (zur Prüfung durch das Team, erscheint also nicht sofort
-live in der Datenbank):
+live in der Datenbank; `source` steht dabei auf `physical_albert`, und
+`about_source` hält fest, welche Persona den Eintrag erfasst hat):
 - **`submit_wish`**: ein Zukunftswunsch — Originalwunsch, warum er der
   Person wichtig ist, und eine selbst entwickelte lokale Idee dazu
 - **`submit_challenge`**: ein Anliegen oder eine Beobachtung, die jemanden
@@ -134,8 +135,10 @@ live in der Datenbank):
 
 Ist "Bestehende Organisationen und Initiativen erwähnen dürfen" in den
 Einstellungen aktiviert, bekommt Albert zusätzlich das Tool
-`lookup_ecosystem`. Damit darf er — aber erst NACHDEM ein Wunsch/Anliegen
-bereits erfasst wurde, nie vorher — in den Tabellen `organizations`,
+`lookup_ecosystem`. Normalerweise darf er das erst NACHDEM ein
+Wunsch/Anliegen bereits erfasst wurde, nie vorher (Ausnahme: fragt die
+Person selbst aktiv danach, ob es zu einem Thema schon etwas gibt, darf
+sofort geantwortet werden) — in den Tabellen `organizations`,
 `initiatives` und `_input_pipeline` nach passenden bestehenden Einträgen
 suchen und höchstens einen davon beiläufig erwähnen (z.B. "das gibt's
 hier schon als Initiative X"). Die Suche filtert bei `organizations`/
@@ -169,6 +172,15 @@ Hinweis: Beide Varianten benoetigen Zugriff auf Mikrofon und Lautsprecher
 
 Wird bei jedem Tag aktualisiert.
 
+- **v1.3.1** — Erfasst jetzt, welche Persona (Albert/Albertine/Alex)
+  einen Eintrag aufgenommen hat (`about_source`-Feld in
+  `_input_pipeline`, bisher ungenutzt -- kein neues Feld nötig).
+  Nebenbei einen echten Bug gefunden: alle Einträge liefen bisher unter
+  `source=web_albert` statt des dafür vorgesehenen `physical_albert`.
+  Ökosystem-Modus: fragt die Person selbst aktiv nach bestehenden
+  Organisationen/Initiativen, darf Albert sofort antworten (auch ohne
+  vorher erfassten Wunsch) und danach entstehende Wünsche normal
+  erfassen.
 - **v1.3.0** — Neuer, standardmässig deaktivierter "Ökosystem-Modus":
   Albert darf (nach dem Erfassen eines Wunsches/Anliegens, nie davor)
   bestehende Organisationen, Initiativen und frühere Beiträge aus

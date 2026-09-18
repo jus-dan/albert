@@ -360,7 +360,7 @@ async def albert_socket(websocket: WebSocket, persona_id: str):
             # Speicherns eintrifft.
             awaiting_reply_before_print = True
 
-        result = await dispatch_tool(name, arguments)
+        result = await dispatch_tool(name, arguments, persona.name)
 
         if name in ("submit_wish", "submit_challenge"):
             try:

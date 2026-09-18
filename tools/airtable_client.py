@@ -50,12 +50,13 @@ async def submit_contribution(
     start_date_time: str = "",
     end_date_time: str = "",
     challenge_framing: str = "",
+    captured_by_persona: str = "",
 ) -> dict:
     fields: dict = {
         "name": name,
         "entity_type": entity_type,
         "about": about,
-        "source": "web_albert",
+        "source": "physical_albert",
         "triage_status": "new",
     }
     if contact_email:
@@ -72,6 +73,12 @@ async def submit_contribution(
         fields["end_date_time"] = end_date_time
     if challenge_framing:
         fields["challenge_framing"] = challenge_framing
+    if captured_by_persona:
+        # about_source ist im Schema fuer sowas vorgesehen und wird von
+        # keinem anderen System befuellt (leer bei allen bisherigen
+        # Eintraegen, im Gegensatz z.B. zu ai_draft) -- kein neues Feld
+        # noetig.
+        fields["about_source"] = captured_by_persona
 
     async with httpx.AsyncClient(timeout=15) as client:
         resp = await client.post(
