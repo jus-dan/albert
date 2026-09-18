@@ -122,6 +122,31 @@ PRINTING_DISABLED_TEXT = (
     "Thema nie erwähnen, nicht danach fragen, keinen Link ankündigen."
 )
 
+ECOSYSTEM_LOOKUP_ENABLED_TEXT = (
+    "\n\nDu hast ausserdem das Tool 'lookup_ecosystem'. Damit siehst du "
+    "nach, ob es zum Thema der Person hier schon bestehende "
+    "Organisationen, Initiativen oder Beiträge anderer Besucher gibt. "
+    "Regeln dafür: Rufe es erst auf, NACHDEM der Wunsch bzw. das Anliegen "
+    "mit 'submit_wish'/'submit_challenge' erfasst ist -- nie vorher, "
+    "damit die eigene Idee der Person unbeeinflusst bleibt. Höchstens "
+    "zweimal pro Gespräch, als 'query' ein bis zwei Stichworte. Sag im "
+    "selben Atemzug wie der Aufruf schon deinen nächsten Satz, damit "
+    "keine stille Pause entsteht. Kommt etwas zurück, erwähne HÖCHSTENS "
+    "EINEN Treffer in EINEM lockeren Satz (z.B. 'da gibt es hier übrigens "
+    "schon X, die genau daran arbeiten') und mach dann sofort normal "
+    "weiter -- das ist eine Randnotiz, nie das Hauptthema und nie ein "
+    "Ersatz für die eigene Idee der Person. Nenne ausschliesslich das, "
+    "was das Tool zurückgegeben hat, nie etwas Erfundenes und nie eine "
+    "Organisation aus deinem eigenen Wissen. Kommt nichts zurück oder "
+    "passt nichts wirklich zum Thema, erwähne die Suche mit keinem Wort."
+)
+
+ECOSYSTEM_LOOKUP_DISABLED_TEXT = (
+    "\n\nDu hast keinen Zugriff auf bestehende Organisationen oder "
+    "Initiativen -- erwähne nie welche, nenne nie Namen von Projekten "
+    "und behaupte nie, dass es zu einem Thema schon etwas gibt."
+)
+
 SAFETY_GUIDANCE = (
     "Antworte in der Sprache, in der die Person zuerst mit dir gesprochen "
     "hat (z.B. Deutsch, Französisch, Italienisch oder Englisch -- wir sind "
@@ -151,13 +176,18 @@ class Persona:
     voice: str
     style_note: str = ""
 
-    def system_instructions(self, printing_enabled: bool = False) -> str:
+    def system_instructions(
+        self, printing_enabled: bool = False, ecosystem_lookup_enabled: bool = False
+    ) -> str:
         instructions = f"Du bist {self.name}."
         if self.style_note:
             instructions += " " + self.style_note
         instructions += "\n\n" + BEHAVIOR_GUIDANCE
         instructions += "\n\n" + TOOL_MECHANICS
         instructions += PRINTING_ENABLED_TEXT if printing_enabled else PRINTING_DISABLED_TEXT
+        instructions += (
+            ECOSYSTEM_LOOKUP_ENABLED_TEXT if ecosystem_lookup_enabled else ECOSYSTEM_LOOKUP_DISABLED_TEXT
+        )
         instructions += END_CONVERSATION_TEXT
         instructions += "\n\n" + SAFETY_GUIDANCE
         return instructions

@@ -16,6 +16,29 @@ def _headers() -> dict:
     }
 
 
+def _escape_formula_text(value: str) -> str:
+    """Nur fuer die Interpolation in filterByFormula -- Anfuehrungszeichen
+    und Backslashes wuerden die Formel zerschiessen. Die Suchanfrage kommt
+    live aus Sprache, also nie ungefiltert einsetzen."""
+    return (value or "").replace("\\", "").replace('"', "").replace("'", "").strip()[:60]
+
+
+_REGEX_SPECIAL_CHARS = ".^$*+?()[]{}|"
+
+
+def _word_boundary_pattern(query: str) -> str:
+    """Baut ein REGEX_MATCH-Muster mit Wortgrenzen (\\b...\\b) statt
+    einfachem SEARCH() -- SEARCH() ist reine Teilstring-Suche und faende
+    z.B. bei der Anfrage "velo" auch "development" (enthaelt "velo" als
+    Teilstring), was live getestet und bestaetigt wurde."""
+    safe = _escape_formula_text(query)
+    escaped = "".join(f"\\{ch}" if ch in _REGEX_SPECIAL_CHARS else ch for ch in safe)
+    return rf"\b{escaped}\b"
+
+
+_PIPELINE_ACTIVE = "NOT(OR({triage_status}='rejected', {triage_status}='duplicate'))"
+
+
 async def submit_contribution(
     entity_type: str,
     name: str,
@@ -84,10 +107,7 @@ async def list_recent_entries(challenge_framing: str, limit: int) -> list[dict]:
     live aus Airtable -- schliesst abgelehnte/doppelte Eintraege aus.
     Direkt aus der Datenbank gelesen, kein lokaler Cache, der veralten
     koennte."""
-    formula = (
-        f"AND({{challenge_framing}}='{challenge_framing}', "
-        f"NOT(OR({{triage_status}}='rejected', {{triage_status}}='duplicate')))"
-    )
+    formula = f"AND({{challenge_framing}}='{challenge_framing}', {_PIPELINE_ACTIVE})"
     async with httpx.AsyncClient(timeout=15) as client:
         resp = await client.get(
             f"{BASE_URL}/_input_pipeline",
@@ -106,6 +126,83 @@ async def list_recent_entries(challenge_framing: str, limit: int) -> list[dict]:
                 "id": r.get("id"),
                 "label": fields.get("name", ""),
                 "timestamp": r.get("createdTime", ""),
+            }
+        )
+    return results
+
+
+async def search_published(table: str, query: str, limit: int = 2) -> list[dict]:
+    """Veroeffentlichte Eintraege einer Oekosystem-Tabelle (organizations/
+    initiatives) zu einem Stichwort. NUR publish_status='published' --
+    ungeprüfte, verworfene oder archivierte Eintraege duerfen Besuchern nie
+    vorgelesen werden. Gibt bei jedem Fehler eine leere Liste zurueck, statt
+    eine laufende Sprachantwort abzuwuergen."""
+    if not query or not query.strip():
+        return []
+    pattern = _word_boundary_pattern(query)
+    formula = (
+        f"AND({{publish_status}}='published', OR("
+        f'REGEX_MATCH(LOWER({{name}}&""), "{pattern}"), '
+        f'REGEX_MATCH(LOWER({{description}}&""), "{pattern}"), '
+        f'REGEX_MATCH(LOWER(ARRAYJOIN({{topics}}, ", ")), "{pattern}")))'
+    )
+    try:
+        async with httpx.AsyncClient(timeout=8) as client:
+            resp = await client.get(
+                f"{BASE_URL}/{table}",
+                headers=_headers(),
+                params={"filterByFormula": formula, "maxRecords": limit},
+            )
+            resp.raise_for_status()
+            records = resp.json().get("records", [])
+    except Exception:
+        return []
+
+    results = []
+    for r in records[:limit]:
+        fields = r.get("fields", {})
+        results.append(
+            {
+                "name": fields.get("name", ""),
+                "description": (fields.get("description", "") or "")[:200],
+                "website": fields.get("website", ""),
+                "location": fields.get("location", ""),
+            }
+        )
+    return results
+
+
+async def search_pipeline_entries(query: str, limit: int = 2) -> list[dict]:
+    """Bereits erfasste Wuensche/Anliegen anderer Besucher zu einem
+    Stichwort (thematisch passend, nicht einfach die neuesten -- dafuer
+    gibt es list_recent_entries). Schliesst abgelehnte/doppelte aus."""
+    if not query or not query.strip():
+        return []
+    pattern = _word_boundary_pattern(query)
+    formula = (
+        f"AND({_PIPELINE_ACTIVE}, OR("
+        f'REGEX_MATCH(LOWER({{name}}&""), "{pattern}"), '
+        f'REGEX_MATCH(LOWER({{about}}&""), "{pattern}")))'
+    )
+    try:
+        async with httpx.AsyncClient(timeout=8) as client:
+            resp = await client.get(
+                f"{BASE_URL}/_input_pipeline",
+                headers=_headers(),
+                params={"filterByFormula": formula, "maxRecords": limit},
+            )
+            resp.raise_for_status()
+            records = resp.json().get("records", [])
+    except Exception:
+        return []
+
+    results = []
+    for r in records[:limit]:
+        fields = r.get("fields", {})
+        results.append(
+            {
+                "label": fields.get("name", ""),
+                "framing": fields.get("challenge_framing", ""),
             }
         )
     return results

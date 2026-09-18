@@ -1,7 +1,11 @@
+import asyncio
 import json
+import logging
 
 from tools import airtable_client
 from tools.text_utils import swiss_de
+
+logger = logging.getLogger("albert.tools")
 
 TOOLS = [
     {
@@ -121,6 +125,32 @@ END_CONVERSATION_TOOL = {
     },
 }
 
+ECOSYSTEM_LOOKUP_TOOL = {
+    "type": "function",
+    "name": "lookup_ecosystem",
+    "description": (
+        "Sucht in der Datenbank nach bereits bestehenden Organisationen, "
+        "Initiativen und Beitraegen anderer Besucher zu einem Thema. Rufe "
+        "dies NUR auf, NACHDEM der Wunsch bzw. das Anliegen der Person "
+        "schon mit 'submit_wish' oder 'submit_challenge' erfasst wurde -- "
+        "nie davor, sonst beeinflusst du ihre eigene Idee. Hoechstens "
+        "zweimal pro Gespraech. Als 'query' ein bis zwei Stichworte zum "
+        "Thema angeben, nicht den ganzen Satz. Erwaehne nur, was "
+        "zurueckkommt -- erfinde nie eigene Organisationen oder Projekte. "
+        "Kommt nichts zurueck, sag dazu gar nichts."
+    ),
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "query": {
+                "type": "string",
+                "description": "Ein bis zwei Stichworte zum Thema, z.B. 'Velo' oder 'Nachbarschaft'.",
+            },
+        },
+        "required": ["query"],
+    },
+}
+
 
 async def dispatch(name: str, arguments: dict) -> str:
     if name == "submit_wish":
@@ -169,5 +199,31 @@ async def dispatch(name: str, arguments: dict) -> str:
         return json.dumps(
             {"status": "ok", "table": result["table"], "record_id": result["record_id"]}
         )
+
+    if name == "lookup_ecosystem":
+        query = swiss_de(arguments.get("query", "")).strip()
+        if not query:
+            return json.dumps({"error": "query darf nicht leer sein."})
+        try:
+            orgs, inits, entries = await asyncio.gather(
+                airtable_client.search_published("organizations", query, 2),
+                airtable_client.search_published("initiatives", query, 2),
+                airtable_client.search_pipeline_entries(query, 2),
+            )
+        except Exception:
+            logger.exception("Ökosystem-Suche fehlgeschlagen (%s)", query)
+            return json.dumps({"results": [], "hinweis": "Suche nicht moeglich -- nichts erwaehnen."})
+
+        def _clean(entry: dict) -> dict:
+            return {k: (swiss_de(v) if isinstance(v, str) else v) for k, v in entry.items()}
+
+        results = (
+            [{"typ": "organisation", **_clean(o)} for o in orgs]
+            + [{"typ": "initiative", **_clean(i)} for i in inits]
+            + [{"typ": "beitrag", **_clean(e)} for e in entries]
+        )
+        if not results:
+            return json.dumps({"results": [], "hinweis": "Nichts Passendes gefunden -- nichts erwaehnen."})
+        return json.dumps({"results": results[:4]}, ensure_ascii=False)
 
     return json.dumps({"error": f"Unbekanntes Tool: {name}"})

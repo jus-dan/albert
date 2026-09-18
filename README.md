@@ -82,8 +82,10 @@ Einstellungen und zeigt die laufende Version.
   Person hat (mit "Vorhören"-Knopf für einen Audio-Testsatz direkt in der
   Seite), freihändig vs. Push-to-Talk, ob und auf welchem Drucker gedruckt
   wird (inkl. "Testseite drucken"-Knopf, unabhängig von einem Gespräch),
-  wie viele Einträge das Themen-Board je Spalte zeigt, und ob
-  Debug-Informationen im Gespräch angezeigt werden.
+  ob Albert bestehende Organisationen/Initiativen/frühere Beiträge
+  erwähnen darf ("Ökosystem"-Modus, siehe unten), wie viele Einträge das
+  Themen-Board je Spalte zeigt, und ob Debug-Informationen im Gespräch
+  angezeigt werden.
 - **`/board.html`** ("Themen-Board", auch im Footer verlinkt) — für einen
   zweiten Monitor gedacht: zeigt live und synchron aus Airtable die
   neuesten Anliegen und Zukunftswünsche als Post-its (Anzahl je Spalte
@@ -128,6 +130,21 @@ live in der Datenbank):
 - **`submit_challenge`**: ein Anliegen oder eine Beobachtung, die jemanden
   beschäftigt
 
+### Ökosystem-Modus (optional, standardmässig aus)
+
+Ist "Bestehende Organisationen und Initiativen erwähnen dürfen" in den
+Einstellungen aktiviert, bekommt Albert zusätzlich das Tool
+`lookup_ecosystem`. Damit darf er — aber erst NACHDEM ein Wunsch/Anliegen
+bereits erfasst wurde, nie vorher — in den Tabellen `organizations`,
+`initiatives` und `_input_pipeline` nach passenden bestehenden Einträgen
+suchen und höchstens einen davon beiläufig erwähnen (z.B. "das gibt's
+hier schon als Initiative X"). Die Suche filtert bei `organizations`/
+`initiatives` hart auf `publish_status='published'` — unveröffentlichte,
+verworfene oder archivierte Einträge werden nie vorgelesen. Die
+Wortsuche nutzt Airtables `REGEX_MATCH` mit Wortgrenzen (nicht die
+einfachere `SEARCH`-Teilstringsuche), damit z.B. eine Suche nach "Velo"
+nicht zufällig "development" trifft.
+
 Alle drei Personas haben feste Leitplanken (jugendfrei, kein Bezug zu
 politischen/religiösen Themen, Schweizer Hochdeutsch ohne "ß") in ihren
 Instruktionen (`personas.py`, `persona_behavior.md`).
@@ -152,6 +169,12 @@ Hinweis: Beide Varianten benoetigen Zugriff auf Mikrofon und Lautsprecher
 
 Wird bei jedem Tag aktualisiert.
 
+- **v1.3.0** — Neuer, standardmässig deaktivierter "Ökosystem-Modus":
+  Albert darf (nach dem Erfassen eines Wunsches/Anliegens, nie davor)
+  bestehende Organisationen, Initiativen und frühere Beiträge aus
+  Airtable nachschlagen und höchstens einen Treffer beiläufig erwähnen.
+  Neues Tool `lookup_ecosystem`, neue Einstellung, harter Filter auf
+  veröffentlichte Einträge, Wortgrenzen-Suche statt Teilstringsuche.
 - **v1.2.9** — Kiosk hat jetzt einen physischen grünen Knopf statt der
   Leertaste (löst technisch weiterhin die Leertaste aus). Begrüssung,
   Bildschirm-Hinweis und Einstellungen entsprechend angepasst. "Hört

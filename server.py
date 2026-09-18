@@ -11,7 +11,13 @@ from fastapi.staticfiles import StaticFiles
 from personas import PERSONAS, farewell_instructions, greeting_instructions
 from realtime_client import RealtimeClient
 from tools import airtable_client
-from tools.definitions import CONFIRM_PRINT_TOOL, END_CONVERSATION_TOOL, TOOLS, dispatch as dispatch_tool
+from tools.definitions import (
+    CONFIRM_PRINT_TOOL,
+    ECOSYSTEM_LOOKUP_TOOL,
+    END_CONVERSATION_TOOL,
+    TOOLS,
+    dispatch as dispatch_tool,
+)
 from tools.printing import list_printers, print_test_page, print_wunschzettel_directly
 from tools.settings import DEFAULT_SETTINGS, VALID_VOICES, load_settings, printing_active, save_settings
 from tools.text_utils import swiss_de
@@ -98,6 +104,7 @@ async def api_set_settings(payload: dict):
         "selected_printer": selected_printer,
         "board_item_limit": board_item_limit,
         "persona_voices": persona_voices,
+        "ecosystem_lookup_enabled": bool(payload.get("ecosystem_lookup_enabled", False)),
     }
     save_settings(settings)
     return settings
@@ -244,6 +251,7 @@ async def albert_socket(websocket: WebSocket, persona_id: str):
     settings = load_settings()
     push_to_talk = settings.get("interaction_mode") == "push_to_talk"
     printing_on = printing_active(settings)
+    ecosystem_on = bool(settings.get("ecosystem_lookup_enabled"))
 
     async def send_audio(pcm_bytes: bytes):
         await websocket.send_text(
@@ -395,6 +403,8 @@ async def albert_socket(websocket: WebSocket, persona_id: str):
     session_tools = TOOLS + [END_CONVERSATION_TOOL]
     if printing_on:
         session_tools = session_tools + [CONFIRM_PRINT_TOOL]
+    if ecosystem_on:
+        session_tools = session_tools + [ECOSYSTEM_LOOKUP_TOOL]
     voice = settings.get("persona_voices", {}).get(persona_id) or persona.voice
     if voice not in VALID_VOICES:
         voice = persona.voice
@@ -402,7 +412,9 @@ async def albert_socket(websocket: WebSocket, persona_id: str):
     try:
         await client.connect(
             voice=voice,
-            instructions=persona.system_instructions(printing_enabled=printing_on),
+            instructions=persona.system_instructions(
+                printing_enabled=printing_on, ecosystem_lookup_enabled=ecosystem_on
+            ),
             tools=session_tools,
             push_to_talk=push_to_talk,
         )

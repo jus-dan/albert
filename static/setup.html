@@ -168,6 +168,19 @@
     </fieldset>
 
     <fieldset>
+      <legend>Ökosystem</legend>
+      <label class="option">
+        <input type="checkbox" id="ecosystem-checkbox" />
+        Bestehende Organisationen und Initiativen erwähnen dürfen
+      </label>
+      <p class="hint">
+        Albert darf im Gespräch nachschlagen, ob es zum Thema schon etwas
+        gibt, und das beiläufig erwähnen — erst nachdem der Wunsch erfasst
+        ist. Ohne Haken sammelt Albert nur, wie bisher.
+      </p>
+    </fieldset>
+
+    <fieldset>
       <legend>Themen-Board</legend>
       <label class="option" style="display:block;">
         Anzahl Einträge pro Spalte (neueste zuerst)
@@ -196,6 +209,7 @@
     const MODE_RADIOS = document.querySelectorAll('input[name="mode"]');
     const debugCheckbox = document.getElementById("debug-checkbox");
     const printingCheckbox = document.getElementById("printing-checkbox");
+    const ecosystemCheckbox = document.getElementById("ecosystem-checkbox");
     const printerSelect = document.getElementById("printer-select");
     const printerHint = document.getElementById("printer-hint");
     const boardLimitInput = document.getElementById("board-limit-input");
@@ -289,6 +303,7 @@
         });
         debugCheckbox.checked = !!data.show_debug_info;
         printingCheckbox.checked = !!data.printing_enabled;
+        ecosystemCheckbox.checked = !!data.ecosystem_lookup_enabled;
         boardLimitInput.value = data.board_item_limit || 15;
         await loadPrinters(data.selected_printer || "");
         await loadVoices(data.persona_voices || {});
@@ -313,6 +328,7 @@
 
       const show_debug_info = debugCheckbox.checked;
       const printing_enabled = printingCheckbox.checked;
+      const ecosystem_lookup_enabled = ecosystemCheckbox.checked;
       const selected_printer = printerSelect.value;
       const board_item_limit = parseInt(boardLimitInput.value, 10) || 15;
       const persona_voices = {};
@@ -329,6 +345,7 @@
             interaction_mode,
             show_debug_info,
             printing_enabled,
+            ecosystem_lookup_enabled,
             selected_printer,
             board_item_limit,
             persona_voices,
