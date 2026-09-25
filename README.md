@@ -26,6 +26,12 @@ Das funktioniert auch nach dem Kopieren des ganzen Ordners auf einen anderen
 Rechner (z.B. via GitHub-Klon oder USB-Stick) — es muss nur Python 3.11+
 bereits installiert sein, den Rest erledigt das Skript.
 
+Steht dabei statt "Version:" die Meldung "Entwicklungs-Branch ... erkannt",
+läuft auf der Kopie noch ein Entwicklungs-Branch statt `main` (typisch bei
+einer 1:1-Ordnerkopie einer Entwicklungsmaschine) — einmalig
+**`Auf-Produktion-umstellen.bat`** doppelklicken, danach startet
+`Albert-starten.bat` wieder ganz normal mit Versionsauswahl.
+
 ## Manuelles Setup (Alternative)
 
 1. Virtuelle Umgebung anlegen und Abhaengigkeiten installieren:
