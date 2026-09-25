@@ -40,6 +40,23 @@ if "!GIT_BRANCH!"=="main" (
 
 echo Aktueller Branch: !GIT_BRANCH!
 echo.
+
+rem Andere Tools (z.B. Codex CLI) legen lokal manchmal eigene Refs unter
+rem refs/codex/... an. Zeigt so ein Ref auf ein nicht mehr vorhandenes
+rem Objekt, bricht jeder "git fetch" auf dieser Maschine ab, ohne dass es
+rem beim Start auffaellt. Albert braucht diesen Namespace nie -- vorsorglich
+rem weg damit. Normales "rmdir" kann an zu langen Pfaden scheitern (tief
+rem verschachtelte Hash-Ordner), daher der robocopy-Spiegel-Trick.
+if exist ".git\refs\codex" (
+    echo Entferne verwaiste lokale Refs unter .git\refs\codex ...
+    set "EMPTY_DIR=%TEMP%\albert_empty_%RANDOM%"
+    mkdir "!EMPTY_DIR!" >nul 2>nul
+    robocopy "!EMPTY_DIR!" ".git\refs\codex" /MIR >nul
+    rmdir "!EMPTY_DIR!" >nul 2>nul
+    rmdir ".git\refs\codex" >nul 2>nul
+    echo.
+)
+
 echo Verwerfe lokale Aenderungen an diesem Ort und wechsle auf 'main' ...
 git checkout -- . >nul 2>nul
 git checkout main

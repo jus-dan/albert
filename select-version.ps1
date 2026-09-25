@@ -8,6 +8,23 @@ function Write-Result($action, $ref) {
     "$action|$ref" | Set-Content -Path $ResultFile -Encoding ascii
 }
 
+# Andere Tools (z.B. Codex CLI) legen lokal manchmal eigene Refs unter
+# refs/codex/... an. Zeigt so ein Ref auf ein nicht mehr vorhandenes Objekt
+# (z.B. weil nur ein Teil des Ordners kopiert wurde), bricht JEDER "git
+# fetch" komplett ab -- lautlos, weil unten nach $null umgeleitet wird. Der
+# Namespace wird von Albert nie gebraucht, deshalb vorsorglich weg damit,
+# bevor ueberhaupt gefetcht wird. Normales Loeschen kann an zu langen
+# Pfaden scheitern (tief verschachtelte Hash-Ordner), daher der
+# robocopy-Spiegel-Trick statt Remove-Item.
+$codexRefs = ".git\refs\codex"
+if (Test-Path $codexRefs) {
+    $emptyDir = Join-Path $env:TEMP "albert_empty_$([guid]::NewGuid())"
+    New-Item -ItemType Directory -Path $emptyDir | Out-Null
+    robocopy $emptyDir $codexRefs /MIR | Out-Null
+    Remove-Item $emptyDir -Force -ErrorAction SilentlyContinue
+    Remove-Item $codexRefs -Force -ErrorAction SilentlyContinue
+}
+
 git fetch --quiet origin 2>$null | Out-Null
 git fetch --quiet --tags origin 2>$null | Out-Null
 
