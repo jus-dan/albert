@@ -69,7 +69,12 @@ if exist ".git" (
 
             if "!VERSION_ACTION!"=="CHECKOUT" (
                 echo Wechsle zu Version !VERSION_REF! ...
-                git checkout !VERSION_REF! --quiet
+                rem --force: bei kopierten Installationen kann es unversionierte
+                rem Dateien geben, die es im Ziel-Tag noch nicht gab (z.B. neu
+                rem hinzugekommene Skripte) -- git verweigert den Checkout sonst
+                rem sicherheitshalber. Ein Versionswechsel soll aber immer genau
+                rem den getaggten Stand herstellen, nie an so etwas haengen bleiben.
+                git checkout --force !VERSION_REF! --quiet
                 if errorlevel 1 (
                     echo FEHLER beim Wechsel zu !VERSION_REF! ^(siehe Meldung oben^) -- verwende
                     echo den vorhandenen Stand.
