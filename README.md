@@ -178,6 +178,11 @@ Hinweis: Beide Varianten benoetigen Zugriff auf Mikrofon und Lautsprecher
 
 Wird bei jedem Tag aktualisiert.
 
+- **v1.3.3** — Neues Skript `Auf-Produktion-umstellen.bat`: wird dieser
+  Ordner samt `.git` 1:1 auf eine neue Maschine kopiert, bleibt dort der
+  zuletzt ausgecheckte Entwicklungs-Branch aktiv und die Versionsauswahl
+  wird übersprungen. Ein Doppelklick auf das neue Skript wechselt auf
+  `main`, ganz ohne Terminal oder Git-Befehle von Hand.
 - **v1.3.2** — Grüner Knopf startet das Gespräch jetzt auch direkt: auf
   der Personen-Auswahlseite (startet automatisch mit Albert) und nach
   der Personenwahl anstelle des Start-Buttons -- hält man ihn dabei
