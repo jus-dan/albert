@@ -26,6 +26,12 @@ Das funktioniert auch nach dem Kopieren des ganzen Ordners auf einen anderen
 Rechner (z.B. via GitHub-Klon oder USB-Stick) — es muss nur Python 3.11+
 bereits installiert sein, den Rest erledigt das Skript.
 
+Steht dabei statt "Version:" die Meldung "Entwicklungs-Branch ... erkannt",
+läuft auf der Kopie noch ein Entwicklungs-Branch statt `main` (typisch bei
+einer 1:1-Ordnerkopie einer Entwicklungsmaschine) — einmalig
+**`Auf-Produktion-umstellen.bat`** doppelklicken, danach startet
+`Albert-starten.bat` wieder ganz normal mit Versionsauswahl.
+
 ## Manuelles Setup (Alternative)
 
 1. Virtuelle Umgebung anlegen und Abhaengigkeiten installieren:
@@ -172,6 +178,11 @@ Hinweis: Beide Varianten benoetigen Zugriff auf Mikrofon und Lautsprecher
 
 Wird bei jedem Tag aktualisiert.
 
+- **v1.3.3** — Neues Skript `Auf-Produktion-umstellen.bat`: wird dieser
+  Ordner samt `.git` 1:1 auf eine neue Maschine kopiert, bleibt dort der
+  zuletzt ausgecheckte Entwicklungs-Branch aktiv und die Versionsauswahl
+  wird übersprungen. Ein Doppelklick auf das neue Skript wechselt auf
+  `main`, ganz ohne Terminal oder Git-Befehle von Hand.
 - **v1.3.2** — Grüner Knopf startet das Gespräch jetzt auch direkt: auf
   der Personen-Auswahlseite (startet automatisch mit Albert) und nach
   der Personenwahl anstelle des Start-Buttons -- hält man ihn dabei
