@@ -178,6 +178,13 @@ Hinweis: Beide Varianten benoetigen Zugriff auf Mikrofon und Lautsprecher
 
 Wird bei jedem Tag aktualisiert.
 
+- **v1.3.4** — Bug gefunden und behoben: verwaiste lokale Refs unter
+  `refs/codex/...` (von einem anderen Tool wie Codex CLI angelegt, zeigen
+  auf ein nicht mehr vorhandenes Objekt) liessen `git fetch` lautlos
+  scheitern -- die Versionsauswahl zeigte dann einfach keine neuen Tags
+  mehr, ohne jede Fehlermeldung. `select-version.ps1` und
+  `Auf-Produktion-umstellen.bat` räumen den Namespace jetzt vor jedem
+  Fetch automatisch auf.
 - **v1.3.3** — Neues Skript `Auf-Produktion-umstellen.bat`: wird dieser
   Ordner samt `.git` 1:1 auf eine neue Maschine kopiert, bleibt dort der
   zuletzt ausgecheckte Entwicklungs-Branch aktiv und die Versionsauswahl
