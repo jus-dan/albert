@@ -178,6 +178,13 @@ Hinweis: Beide Varianten benoetigen Zugriff auf Mikrofon und Lautsprecher
 
 Wird bei jedem Tag aktualisiert.
 
+- **v1.3.5** — Weiterer Bug bei kopierten Installationen behoben: die
+  Versionsauswahl konnte beim Wechseln auf einen anderen Tag hängen
+  bleiben, wenn im Ordner schon eine Datei lag, die es im Ziel-Tag noch
+  nicht gab (git verweigerte den Checkout sicherheitshalber). Der Wechsel
+  erzwingt jetzt (`--force`), immer genau den getaggten Stand
+  herzustellen -- `.env` mit den Zugangsdaten bleibt davon unberührt, das
+  ist nie Teil eines Tags.
 - **v1.3.4** — Bug gefunden und behoben: verwaiste lokale Refs unter
   `refs/codex/...` (von einem anderen Tool wie Codex CLI angelegt, zeigen
   auf ein nicht mehr vorhandenes Objekt) liessen `git fetch` lautlos
