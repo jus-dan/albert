@@ -31,6 +31,7 @@
     border-radius: 12px;
     padding: 1rem 1.2rem;
   }
+  .point:target { border-color: var(--text); }
   .point h2 {
     margin: 0 0 0.4rem;
     font-size: 1rem;
@@ -152,10 +153,12 @@
           <code>wss://api.openai.com/v1/realtime</code> übertragen, Modell
           <code>gpt-realtime</code> -- ein Speech-to-Speech-Modell, das
           Spracherkennung, Sprachverständnis/Antwortgenerierung und
-          Sprachsynthese in einem einzigen Modellaufruf kombiniert, ohne
-          Umweg über eine separate Text-Transkription. Es gelten OpenAIs
-          Nutzungsbedingungen für API-Traffic (nicht identisch mit den
-          Regeln für ChatGPT im Browser).
+          Sprachsynthese in einem einzigen Modellaufruf kombiniert. Damit
+          der Gesprächsverlauf auch als Text auf dem Bildschirm erscheint,
+          läuft parallel eine Transkription mit
+          <code>gpt-4o-mini-transcribe</code>, ebenfalls bei OpenAI. Es
+          gelten OpenAIs Nutzungsbedingungen für API-Traffic (nicht
+          identisch mit den Regeln für ChatGPT im Browser).
         </p>
       </div>
       <div class="point">
@@ -178,6 +181,31 @@
           Session-Speicher zwischen zwei Gesprächen (kein Cookie, kein
           Verlauf) -- nach der Verabschiedung wird die WebSocket-Verbindung
           geschlossen und die Oberfläche zurückgesetzt.
+        </p>
+      </div>
+      <div class="point" id="datenschutz">
+        <h2>Datenschutz</h2>
+        <p>
+          <strong>Übertragung:</strong> Dein gesprochenes Wort und der daraus
+          entstehende Text werden zur Verarbeitung an OpenAI (USA)
+          übertragen. Auf diesem Rechner wird nichts davon gespeichert.
+        </p>
+        <p style="margin-top: 0.6rem;">
+          <strong>Speicherung bei OpenAI:</strong> Nach OpenAIs Angaben werden
+          Daten, die über die API geschickt werden, zur Missbrauchserkennung
+          für eine begrenzte Zeit (in der Regel bis zu 30 Tage)
+          aufbewahrt und danach gelöscht.
+        </p>
+        <p style="margin-top: 0.6rem;">
+          <strong>Training:</strong> Über die API übermittelte Daten werden
+          von OpenAI standardmässig <em>nicht</em> zum Training der Modelle
+          verwendet.
+        </p>
+        <p style="margin-top: 0.6rem;">
+          <strong>Was beim Team ankommt:</strong> Nur der erfasste Wunsch
+          bzw. das Anliegen als Text wird in Airtable gespeichert -- ohne
+          Namen, ausser du nennst ihn freiwillig. Die Audioaufnahme selbst
+          wird nicht abgelegt.
         </p>
       </div>
     </div>
