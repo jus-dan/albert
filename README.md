@@ -178,6 +178,13 @@ Hinweis: Beide Varianten benoetigen Zugriff auf Mikrofon und Lautsprecher
 
 Wird bei jedem Tag aktualisiert.
 
+- **v1.3.6** — Datenschutz-Hinweis: unter den drei Figuren auf der
+  Startseite ein Link "Infos zum Datenschutz", der in einem neuen Tab
+  direkt zum neuen Abschnitt auf "Über diese App" springt (Übertragung
+  an OpenAI, Speicherung, kein Training, was beim Team ankommt).
+  Ausserdem korrigiert: die Seite behauptete, es gebe keine separate
+  Transkription -- tatsächlich läuft parallel `gpt-4o-mini-transcribe`
+  für die Textanzeige im Gespräch.
 - **v1.3.5** — Weiterer Bug bei kopierten Installationen behoben: die
   Versionsauswahl konnte beim Wechseln auf einen anderen Tag hängen
   bleiben, wenn im Ordner schon eine Datei lag, die es im Ziel-Tag noch
